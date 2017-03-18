@@ -1,0 +1,71 @@
+version: "2"
+
+services:
+
+  pi-hole:
+    network_mode: bridge
+    container_name: pihole
+    build:
+      context: .
+      dockerfile: docker-files/pi-hole/Dockerfile
+    environment:
+      - VIRTUAL_HOST=pihole.local
+      - ServerIP=192.168.0.119
+
+    ports:
+      - 8080:80
+      - 53:53/tcp
+      - 53:53/udp
+    volumes:
+      - /etc/pihole/
+      - ./etc/pihole/lan.list:/etc/pihole/lan.list
+    extra_hosts:
+      - "pihole.local:192.168.0.119"
+    # networks:
+      # default:
+        # ipv4_address: 172.25.0.3
+
+
+  nginx-proxy:
+    network_mode: bridge
+    container_name: nginx-proxy
+    build:
+      context: .
+      dockerfile: docker-files/nginx-proxy/Dockerfile
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    # networks:
+      # default:
+        # ipv4_address: 172.25.0.2
+    ports:
+      - "80:80"
+      - "443:443"
+
+    expose:
+      - "80"
+
+  desktop:
+    network_mode: bridge
+    container_name: desktop
+    build:
+      context: docker-files/docker-desktop
+      dockerfile: Dockerfile
+    ports:
+      - "5522:22"
+
+
+# networks:
+  # default:
+    # network_mode: bridge
+    # external:
+      # name: bridge
+
+
+
+# networks:
+  # default:
+    # driver: bridge
+    # ipam:
+      # driver: default
+      # config:
+        # - subnet: 172.25.0.0/24
