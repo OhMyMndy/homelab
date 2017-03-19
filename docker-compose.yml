@@ -5,9 +5,10 @@ services:
   pi-hole:
     network_mode: bridge
     container_name: pihole
+    restart: always
     build:
-      context: .
-      dockerfile: docker-files/pi-hole/Dockerfile
+      context: docker-files/pi-hole
+      dockerfile: Dockerfile
     environment:
       - VIRTUAL_HOST=pihole.local
       - ServerIP=192.168.0.119
@@ -21,22 +22,16 @@ services:
       - ./etc/pihole/lan.list:/etc/pihole/lan.list
     extra_hosts:
       - "pihole.local:192.168.0.119"
-    # networks:
-      # default:
-        # ipv4_address: 172.25.0.3
-
 
   nginx-proxy:
     network_mode: bridge
     container_name: nginx-proxy
+    restart: always
     build:
-      context: .
-      dockerfile: docker-files/nginx-proxy/Dockerfile
+      context: docker-files/nginx-proxy
+      dockerfile: Dockerfile
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
-    # networks:
-      # default:
-        # ipv4_address: 172.25.0.2
     ports:
       - "80:80"
       - "443:443"
@@ -47,25 +42,21 @@ services:
   desktop:
     network_mode: bridge
     container_name: desktop
+    restart: always
     build:
-      context: docker-files/docker-desktop
+      context: docker-files/docker-vnc
+      dockerfile: Dockerfile.ubuntu.icewm.vnc
+    ports:
+      - "5901:5901"
+      - "6901:6901"
+
+  timemachine:
+    network_mode: bridge
+    container_name: timemachine
+    restart: always
+    build:
+      context: docker-files/timemachine
       dockerfile: Dockerfile
     ports:
-      - "5522:22"
-
-
-# networks:
-  # default:
-    # network_mode: bridge
-    # external:
-      # name: bridge
-
-
-
-# networks:
-  # default:
-    # driver: bridge
-    # ipam:
-      # driver: default
-      # config:
-        # - subnet: 172.25.0.0/24
+      - "548:548"
+      - "636:636"
