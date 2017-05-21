@@ -1,3 +1,0 @@
-- install this docker setup on my ubuntu pc
-- check if the containers are accessible by ip address
-	- if so, check if on my MacBook the Ip's are accessible as well
