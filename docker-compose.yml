@@ -75,7 +75,7 @@ services:
       - "./scripts/docker-php-entrypoint:/usr/local/bin/docker-php-entrypoint"
 
   plex:
-    network_mode: bridge
+    network_mode: host
     container_name: plex
     restart: unless-stopped
     image: "linuxserver/plex"
@@ -91,11 +91,12 @@ services:
       - 32400:32400/udp
       - 32469:32469/tcp
       - 32469:32469/udp
-        #  - 5353:5353/udp
+      - 5353:5353/udp
     environment:
       - PGID=$GID
-      - UID=$UID
+      - PUID=$UID
       - VIRTUAL_HOST=plex.local
+      - VERSION=latest
     
   torrent:
     image: haugene/transmission-openvpn
