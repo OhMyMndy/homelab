@@ -1,0 +1,11 @@
+192.168.10.120   php.local
+192.168.10.120   plex-gui.local
+192.168.10.120   couchpotato.local
+192.168.10.120   transmission.local
+192.168.10.120   sabnzb.local
+192.168.10.120   spotweb.local
+192.168.10.120   sickbeard.local
+192.168.10.120   pi-hole.local
+192.168.10.120   dashboard.local
+192.168.10.120   dashboard.homelab
+192.168.10.120   selfoss.local

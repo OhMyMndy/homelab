@@ -1,4 +1,4 @@
-FROM diginc/pi-hole:debian_v2.13.2
+FROM diginc/pi-hole:debian_v3.1
 
 RUN apt-get update \
   && apt-get install vim -y

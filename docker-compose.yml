@@ -3,15 +3,14 @@ version: "2"
 services:
 
   pi-hole:
-    network_mode: bridge
+    network_mode: host
     container_name: pihole
     restart: unless-stopped
     build:
       context: docker-files/pi-hole
       dockerfile: Dockerfile
     environment:
-      - VIRTUAL_HOST=pihole.local
-      - ServerIP=192.168.0.119
+      - ServerIP=$IP_ADDRESS
 
     ports:
       - 8090:80
@@ -19,39 +18,26 @@ services:
       - 53:53/udp
     volumes:
       - /etc/pihole/
-      - ./etc/pihole/lan.list:/etc/pihole/lan.list
-    extra_hosts:
-      - "pihole.local:192.168.0.119"
+#      - ./etc/pihole/lan.list:/etc/pihole/lan.list
+    depends_on: ["nginx"]
 
-  nginx-proxy:
-    network_mode: bridge
-    container_name: nginx-proxy
+  nginx:
+    network_mode: host
+    container_name: nginx
     restart: unless-stopped
     build:
-      context: docker-files/nginx-proxy
+      context: docker-files/nginx
       dockerfile: Dockerfile
     volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./etc/nginx/sites-enabled:/etc/nginx/sites-enabled
+      - ./etc/nginx/conf.d:/etc/nginx/conf.d
+      - ./etc/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./etc/nginx/data:/www/data
     ports:
       - "80:80"
       - "443:443"
 
-    expose:
-      - "80"
-
-  desktop:
-    network_mode: bridge
-    container_name: desktop
-    restart: unless-stopped
-    build:
-      context: docker-files/docker-vnc
-      dockerfile: Dockerfile.ubuntu.icewm.vnc
-    ports:
-      - "5901:5901"
-      - "6901:6901"
-
   timemachine:
-    network_mode: bridge
     container_name: timemachine
     restart: unless-stopped
     build:
@@ -60,19 +46,20 @@ services:
     ports:
       - "548:548"
       - "636:636"
-
+    depends_on: ["nginx"]
 
   php:
-    network_mode: bridge
     container_name: php
     image: "php:7-apache"
     environment:
       - UID=$UID
       - GID=$GID
-      - VIRTUAL_HOST=php.local
     volumes:
       - "/var/www/html:/var/www/html"
-      - "./scripts/docker-php-entrypoint:/usr/local/bin/docker-php-entrypoint"
+      - "./etc/php/entrypoint.sh:/usr/local/bin/docker-php-entrypoint"
+    ports:
+      - 9092:80
+    depends_on: ["nginx"]
 
   plex:
     network_mode: host
@@ -95,33 +82,34 @@ services:
     environment:
       - PGID=$GID
       - PUID=$UID
-      - VIRTUAL_HOST=plex.local
       - VERSION=latest
-    
-  torrent:
-    image: haugene/transmission-openvpn
-    container_name: torrent1
-    privileged: true
-    restart: unless-stopped
-    ports:
-      - "9091:9091"
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
-    volumes:
-      - /tank/media:/media_host:rw
-      - /tank/downloads:/data:rw
-      - /etc/localtime:/etc/localtime:ro
-        #      - /your/storage/path/:/data
-    environment:
-      - VIRTUAL_HOST=torrent.local
-      - OPENVPN_PROVIDER=PUREVPN
-      - OPENVPN_CONFIG=Netherlands1-tcp
-      - PUID=$UID
-      - PGID=$GID
-      - OPENVPN_USERNAME=username
-      - OPENVPN_PASSWORD=password
-      - OPENVPN_OPTS="--inactive 3600 --ping 10 --ping-exit 60
+    depends_on: ["nginx"]
+
+  # torrent:
+  #   image: haugene/transmission-openvpn
+  #   container_name: torrent1
+  #   privileged: true
+  #   restart: unless-stopped
+  #   ports:
+  #     - "9091:9091"
+  #   dns:
+  #     - 8.8.8.8
+  #     - 8.8.4.4
+  #   volumes:
+  #     - /tank/media:/media_host:rw
+  #     - /tank/downloads:/data:rw
+  #     - /etc/localtime:/etc/localtime:ro
+  #       #      - /your/storage/path/:/data
+  #   environment:
+  #     - VIRTUAL_HOST=torrent.local
+  #     - OPENVPN_PROVIDER=PUREVPN
+  #     - OPENVPN_CONFIG=Netherlands1-tcp
+  #     - PUID=$UID
+  #     - PGID=$GID
+  #     - OPENVPN_USERNAME=username
+  #     - OPENVPN_PASSWORD=password
+  #     - OPENVPN_OPTS="--inactive 3600 --ping 10 --ping-exit 60
+  #   depends_on: ["nginx"]
 
   couchpotato:
     image: "linuxserver/couchpotato"
@@ -133,12 +121,12 @@ services:
       - TZ=$TZ
       - PGID=$GID
       - PUID=$UID
-      - VIRTUAL_HOST=couchpotato.local
     volumes:
       - "/tank/media/couchpotato-config:/config"
       - "/tank/downloads/completed:/downloads"
       - "/tank/media/movies:/movies"
       - "/tank/media/sabnzb-config/nzb:/nzb"
+    depends_on: ["nginx"]
 
   sabnzb:
     image: "linuxserver/sabnzbd"
@@ -151,28 +139,36 @@ services:
       - TZ=$TZ
       - PGID=$GID
       - PUID=$UID
-      - VIRTUAL_HOST=sabnzb.local
     volumes:
       - "/tank/media/sabnzb-config:/config"
       - "/tank/downloads/completed:/downloads"
       - "/tank/downloads/incomplete:/incomplete-downloads"
-
+      - "/tank/media:/all-media"
+    depends_on: ["nginx"]
 
 
   mysql:
     image: "mariadb:10.3"
     container_name: mysql
+    hostname: mysql
     restart: unless-stopped
+    ports:
+      - 3306:3306
     volumes:
       - "/tank/database/mysql/:/var/lib/mysql"
     environment:
       - MYSQL_ROOT_PASSWORD=my-secret-pw
+    depends_on: ["nginx"]
 
   spotweb:
-    image: "jgeusebroek/spotweb"
+    build:
+      context: "./docker-files/spotweb"
+      dockerfile: Dockerfile
     container_name: spotweb
     volumes:
       - "/tank/media/spotnet-config:/config"
+      - "./docker-files/spotweb/entrypoint.sh:/entrypoint.sh"
+      - "./docker-files/spotweb/files/hosts.conf:/etc/apache2/sites-enabled/000-default.conf"
     ports:
       - 9080:80
     environment:
@@ -183,19 +179,42 @@ services:
       - SPOTWEB_DB_USER=root
       - SPOTWEB_DB_PASS=my-secret-pw
       - VIRTUAL_HOST=spotweb.local
+    depends_on: ["nginx"]
+
 
   sickbeard:
-    image: "sickbeard/sickbeard"
+      #image: "sickbeard/sickbeard"
+    image: "linuxserver/sickbeard"
     container_name: sickbeard
     volumes:
       - "/tank/downloads/torrent-files:/watch-dir:rw"
       - "/tank/downloads/completed:/downloads:rw"
-      - "/tank/media/sickbeard:/datadir:rw"
+      - "/tank/media/sickbeard:/config:rw"
       - "/tank/media:/media:rw"
     environment:
-      - SICKBEARD_UID=$UID
-      - SICKBEARD_GID=$GID
-      - VIRTUAL_HOST=sickbeard.local
+      - PUID=$UID
+      - PGID=$GID
     ports:
       - 8081:8081
+    depends_on: ["nginx"]
 
+
+  selfoss:
+    build:
+        context: docker-files/selfoss
+        dockerfile: Dockerfile
+    container_name: selfoss
+    volumes:
+      - "/tank/media/selfoss:/var/www/html/data"
+      - "./etc/selfoss/entrypoint.sh:/usr/local/bin/docker-php-entrypoint"
+    environment:
+      - UID=$UID
+      - GID=$GID
+    ports:
+      - 8083:80
+    depends_on: ["nginx"]
+
+
+networks:
+  default:
+    driver: bridge

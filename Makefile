@@ -8,3 +8,6 @@ stop:
 
 rm:
 	docker-compose rm -f
+
+build:
+	docker-compose build
