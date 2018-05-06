@@ -2,8 +2,10 @@ version: "2"
 
 services:
 
-  pi-hole:
-    network_mode: host
+  pihole:
+      #    network_mode: host
+    networks:
+      - default
     container_name: pihole
     restart: unless-stopped
     build:
@@ -11,31 +13,43 @@ services:
       dockerfile: Dockerfile
     environment:
       - ServerIP=$IP_ADDRESS
-
+      - VIRTUAL_HOST=pihole.local
+      - VIRTUAL_PORT=80
+      - DNS1=1.1.1.1
+      - DNS2=1.0.0.1
     ports:
       - 8090:80
       - 53:53/tcp
       - 53:53/udp
     volumes:
       - /etc/pihole/
-#      - ./etc/pihole/lan.list:/etc/pihole/lan.list
+      - ./etc/pihole/resolv.conf:/etc/resolv.conf:ro
+      - ./etc/pihole/lan.list:/etc/pihole/lan.list
     depends_on: ["nginx"]
 
+#  nginx:
+#    network_mode: host
+#    container_name: nginx
+#    restart: unless-stopped
+#    build:
+#      context: docker-files/nginx
+#      dockerfile: Dockerfile
+#    volumes:
+#      - ./etc/nginx/sites-enabled:/etc/nginx/sites-enabled
+#      - ./etc/nginx/conf.d:/etc/nginx/conf.d
+#      - ./etc/nginx/nginx.conf:/etc/nginx/nginx.conf
+#      - ./etc/nginx/data:/www/data
+#    ports:
+#      - "80:80"
+#      - "443:443"
   nginx:
-    network_mode: host
-    container_name: nginx
-    restart: unless-stopped
-    build:
-      context: docker-files/nginx
-      dockerfile: Dockerfile
-    volumes:
-      - ./etc/nginx/sites-enabled:/etc/nginx/sites-enabled
-      - ./etc/nginx/conf.d:/etc/nginx/conf.d
-      - ./etc/nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./etc/nginx/data:/www/data
+    image: jwilder/nginx-proxy
     ports:
       - "80:80"
-      - "443:443"
+    networks:
+      - default
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
 
   timemachine:
     container_name: timemachine
@@ -54,15 +68,21 @@ services:
     environment:
       - UID=$UID
       - GID=$GID
+      - VIRTUAL_HOST=php.local
+      - VIRTUAL_PORT=80
     volumes:
       - "/var/www/html:/var/www/html"
       - "./etc/php/entrypoint.sh:/usr/local/bin/docker-php-entrypoint"
     ports:
       - 9092:80
+    networks:
+      - default
     depends_on: ["nginx"]
 
   plex:
-    network_mode: host
+      #    network_mode: host
+    networks:
+      - default
     container_name: plex
     restart: unless-stopped
     image: "linuxserver/plex"
@@ -83,33 +103,40 @@ services:
       - PGID=$GID
       - PUID=$UID
       - VERSION=latest
+      - VIRTUAL_HOST=plex.local
+      - VIRTUAL_PORT=32400
     depends_on: ["nginx"]
 
-  # torrent:
-  #   image: haugene/transmission-openvpn
-  #   container_name: torrent1
-  #   privileged: true
-  #   restart: unless-stopped
-  #   ports:
-  #     - "9091:9091"
-  #   dns:
-  #     - 8.8.8.8
-  #     - 8.8.4.4
-  #   volumes:
-  #     - /tank/media:/media_host:rw
-  #     - /tank/downloads:/data:rw
-  #     - /etc/localtime:/etc/localtime:ro
-  #       #      - /your/storage/path/:/data
-  #   environment:
-  #     - VIRTUAL_HOST=torrent.local
-  #     - OPENVPN_PROVIDER=PUREVPN
-  #     - OPENVPN_CONFIG=Netherlands1-tcp
-  #     - PUID=$UID
-  #     - PGID=$GID
-  #     - OPENVPN_USERNAME=username
-  #     - OPENVPN_PASSWORD=password
-  #     - OPENVPN_OPTS="--inactive 3600 --ping 10 --ping-exit 60
-  #   depends_on: ["nginx"]
+  transmission:
+    image: haugene/transmission-openvpn:dev
+    privileged: true
+    restart: unless-stopped
+    networks:
+      - default
+    ports:
+      - "9091:9091"
+    dns:
+      - 1.1.1.1 
+      - 1.0.0.1
+    volumes:
+     - /tank:/tank:rw
+#     - /tank/downloads:/data:rw
+     - /etc/localtime:/etc/localtime:ro
+     - ./etc/transmission/resolv.conf:/etc/resolv.conf:ro
+#       #      - /your/storage/path/:/data
+     - ./etc/vpn/purevpn:/etc/openvpn/purevpn
+    environment:
+      - VIRTUAL_HOST=transmission.local
+      - VIRTUAL_PORT=9091
+      - OPENVPN_PROVIDER=PUREVPN
+      - OPENVPN_CONFIG=Belgium-tcp
+      - PUID=$UID
+      - PGID=$GID
+      - OPENVPN_USERNAME=$OPENVPN_USERNAME
+      - OPENVPN_PASSWORD=$OPENVPN_PASSWORD
+      - OPENVPN_OPTS=--inactive 3600 --ping 10 --ping-exit 60
+        #entrypoint: ["cd", "/etc/openvpn",";",  "./adjustConfigs.sh", "purevpn"]
+    depends_on: ["nginx"]
 
   couchpotato:
     image: "linuxserver/couchpotato"
@@ -117,15 +144,20 @@ services:
     restart: unless-stopped
     ports:
       - 5050:5050
+    networks:
+      - default
     environment:
       - TZ=$TZ
       - PGID=$GID
       - PUID=$UID
+      - VIRTUAL_PORT=5050
+      - VIRTUAL_HOST=couchpotato.local
     volumes:
       - "/tank/media/couchpotato-config:/config"
-      - "/tank/downloads/completed:/downloads"
-      - "/tank/media/movies:/movies"
-      - "/tank/media/sabnzb-config/nzb:/nzb"
+        #- "/tank/downloads/completed:/downloads"
+        #- "/tank/media/movies:/movies"
+        #- "/tank/media/sabnzb-config/nzb:/nzb"
+      - /tank:/tank
     depends_on: ["nginx"]
 
   sabnzb:
@@ -135,15 +167,20 @@ services:
     ports:
       - 8080:8080
       - 9090:9090
+    networks:
+      - default
     environment:
       - TZ=$TZ
       - PGID=$GID
       - PUID=$UID
+      - VIRTUAL_HOST=sabnzb.local
+      - VIRTUAL_PORT=8080
     volumes:
       - "/tank/media/sabnzb-config:/config"
-      - "/tank/downloads/completed:/downloads"
-      - "/tank/downloads/incomplete:/incomplete-downloads"
-      - "/tank/media:/all-media"
+        #- "/tank/downloads/completed:/downloads"
+        #- "/tank/downloads/incomplete:/incomplete-downloads"
+        #- "/tank/media:/all-media"
+      - /tank:/tank
     depends_on: ["nginx"]
 
 
@@ -171,6 +208,8 @@ services:
       - "./docker-files/spotweb/files/hosts.conf:/etc/apache2/sites-enabled/000-default.conf"
     ports:
       - 9080:80
+    networks:
+      - default
     environment:
       - TZ=$TZ
       - SPOTWEB_DB_TYPE=pdo_mysql
@@ -178,7 +217,8 @@ services:
       - SPOTWEB_DB_NAME=spotweb
       - SPOTWEB_DB_USER=root
       - SPOTWEB_DB_PASS=my-secret-pw
-      - VIRTUAL_HOST=spotweb.local
+        #      - VIRTUAL_HOST=spotweb.local
+        #      - VIRTUAL_HOST=80
     depends_on: ["nginx"]
 
 
@@ -194,8 +234,12 @@ services:
     environment:
       - PUID=$UID
       - PGID=$GID
+      - VIRTUAL_HOST=sickbeard.local
+      - VIRTUAL_PORT=8081
     ports:
       - 8081:8081
+    networks:
+      - default
     depends_on: ["nginx"]
 
 
@@ -210,8 +254,12 @@ services:
     environment:
       - UID=$UID
       - GID=$GID
-    ports:
-      - 8083:80
+      - VIRTUAL_HOST=selfoss.local
+      - VIRTUAL_PORT=80
+        #    ports:
+        #      - 8083:80
+    networks:
+      - default
     depends_on: ["nginx"]
 
 
