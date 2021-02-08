@@ -1,0 +1,5 @@
+#!/usr/bin/with-contenv bash
+
+chown $PUSER:$PUSER -R $HOME
+
+bash $HOME/dotfiles/link.sh

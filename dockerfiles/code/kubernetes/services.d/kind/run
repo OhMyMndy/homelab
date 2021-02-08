@@ -1,0 +1,12 @@
+#!/usr/bin/with-contenv bash
+
+sleep 2
+
+s6-setuidgid $PUSER kind create cluster || true
+while true; do
+    # @todo check status of cluster and break when it is not available
+    if [[ "$(kind get nodes --name kind -q)" = "" ]] ; then
+        exit 2
+    fi
+    sleep 10
+done
