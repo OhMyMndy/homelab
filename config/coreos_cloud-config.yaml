@@ -1,8 +1,0 @@
-#cloud-config
-
-users:
-  - name: coreuser
-    passwd: $1$USOgBhri$btgz7vRuuijXpAkY5q6PH/
-    groups:
-      - sudo
-      - docker
