@@ -13,3 +13,4 @@ storage/*/*
 *.key
 *.pem
 acme.json
+docker-compose.override.yml
