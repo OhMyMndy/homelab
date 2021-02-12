@@ -1,0 +1,14 @@
+{
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "storage/code-docker/": true,
+        "storage/kubernetes-docker/": true,
+        "storage/registry/docker": true,
+        "**/log/**": true,
+        "**/logs/**": true,
+    }
+}
