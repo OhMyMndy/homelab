@@ -1,4 +1,4 @@
-#!/usr/bin/execlineb -P
+#!/usr/bin/with-contenv bash
 
 rm -f /var/run/docker.pid
 dind dockerd

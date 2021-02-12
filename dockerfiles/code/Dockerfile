@@ -3,7 +3,7 @@ FROM ghcr.io/linuxserver/code-server:version-v3.8.0 as builder
 
 # RUN apt-get update -qq; apt-get install -y -qq bash zsh htop python3-pip zip unzip apache2-utils nmap iputils-ping iproute2 && rm -rf /tmp/**
 
-RUN apt-get update -qq; apt-get install -y -qq bash zsh htop python3-pip zip unzip iputils-ping ca-certificates && rm -rf /tmp/**
+RUN apt-get update -qq; apt-get install -y -qq bash zsh htop python3-pip zip unzip iputils-ping ca-certificates git tig && rm -rf /tmp/**
 # RUN apt-get update -qq; apt-get install -y -qq php-cli php-opcache php-zip php-curl php-yaml php-phpdbg php-xml php-mbstring php-curl php-zip php-pdo-sqlite php-intl php-zmq && rm -rf /tmp/**
 
 # Dependencies for markdown pdf export
@@ -14,13 +14,14 @@ RUN pip3 install jupyter
 # RUN pip3 install ipython
 # RUN pip3 install notebook
 # RUN pip3 install jupyterlab 
-RUN pip3 install docker-compose
+RUN curl -L "https://github.com/docker/compose/releases/download/1.28.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose \
+    && chmod +x /usr/local/bin/docker-compose
 
 RUN pip3 install bash_kernel
 RUN python3 -m bash_kernel.install
 
-RUN pip3 install sshkernel
-RUN python3 -m sshkernel install 
+# RUN pip3 install sshkernel
+# RUN python3 -m sshkernel install 
 
 
 RUN url=https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && tmp="$(mktemp)" \
@@ -50,7 +51,7 @@ RUN chsh -s $(which zsh) $PUSER
 
 RUN npm install -g --silent --force json
 
-RUN apt-get update -qq; apt-get install -y -qq vim && rm -rf /tmp/**
+RUN apt-get update -qq; apt-get install -y -qq tree vim && rm -rf /tmp/**
 
 RUN sudo sh -c 'curl -s https://raw.githubusercontent.com/BorisWilhelms/devcontainer/main/devcontainer.sh > /usr/local/bin/devcontainer && chmod +x /usr/local/bin/devcontainer'
 COPY ./code/services.d/ /etc/services.d/
