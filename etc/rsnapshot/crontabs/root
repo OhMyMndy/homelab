@@ -1,0 +1,17 @@
+# do daily/weekly/monthly maintenance
+# min   hour    day     month   weekday command
+#*/15    *       *       *       *       run-parts /etc/periodic/15min
+#0       *       *       *       *       run-parts /etc/periodic/hourly
+#0       2       *       *       *       run-parts /etc/periodic/daily
+#0       3       *       *       6       run-parts /etc/periodic/weekly
+#0       5       1       *       *       run-parts /etc/periodic/monthly
+
+
+# min   hour    day     month   weekday command
+0       2       *       *       *       /bin/ash -c "rsnapshot daily && echo 'rsnapshot_daily:1|s' | nc -w 1 -u telegraf 8125"
+0       3       *       *       6       /bin/ash -c "rsnapshot weekly && echo 'rsnapshot_weekly:1|s' | nc -w 1 -u telegraf 8125"
+0       5       1       *       *       /bin/ash -c "rsnapshot montly && echo 'rsnapshot_monthly:1|s' | nc -w 1 -u telegraf 8125"
+
+# rsnapshot examples
+#0       */4     *       *       *       rsnapshot alpha
+#50      23      *       *       *       rsnapshot beta

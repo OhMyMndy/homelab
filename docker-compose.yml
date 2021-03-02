@@ -652,6 +652,27 @@ services:
       - default
       - traefik-public
 
+  rsnapshot:
+    image: ohmymndy/rsnapshot:0.1
+    build:
+      context: ./dockerfiles/rsnapshot
+    container_name: rsnapshot
+    env_file:
+      - ./.env
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Europe/Brussels}
+    volumes:
+      - ./etc/rsnapshot:/config
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /tank/rsnapshot:/.snapshots #optional
+      - /tank:/tank
+      - $HOME/docker:$HOME/docker
+      - $HOME/Documents:$HOME/Documents
+    restart: unless-stopped
+
+
 networks:
   default:
     driver: bridge
