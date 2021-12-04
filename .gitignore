@@ -1,17 +1,11 @@
 ._*
 .DS_Store
-*-inspect.json
 .idea
 .history
-code/*
-storage/*/*
-!.keep
-.env
+*/storage/*
+.env*
 *.log
 
-
-*.crt
-*.key
-*.pem
-acme.json
+acme.json*
 docker-compose.override.yml
+!.keep

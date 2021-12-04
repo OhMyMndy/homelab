@@ -1,0 +1,40 @@
+
+services:
+  mysql:
+    image: mariadb:10.4
+    init: true
+    env_file: ./.env
+    restart: unless-stopped
+    volumes:
+      - ./storage/mysql/:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+
+
+  tt-rss:
+    image: registry.gitlab.com/lunik1/docker-tt-rss
+    cap_add:
+      - SYS_ADMIN
+    env_file:
+      - .env
+    environment:
+      - PUID=${PUID:?}
+      - PGID=${PGID:?}
+      - TZ=${TZ:-Europe/Brussels}
+    volumes:
+      - ./etc/tt-rss/cont-init.d/100-remove-locks:/etc/cont-init.d/100-remove-locks
+    networks:
+      - default
+      - reverse-proxy
+    restart: unless-stopped
+    labels:
+      - "traefik.docker.network=default"
+      - "traefik.http.routers.tt-rss.rule=Host(`tt-rss.home.ohmymndy.com`)"
+      - "traefik.http.routers.tt-rss.tls=true"
+      - "traefik.enable=true"
+  
+
+networks:
+  default:
+  reverse-proxy:
+    external:
+      name: reverse-proxy

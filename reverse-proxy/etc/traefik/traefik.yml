@@ -1,0 +1,50 @@
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+  websecure:
+    address: ":443"
+    http:
+      tls:
+        certResolver: ohmymndy
+        domains:
+          - main: "home.ohmymndy.com"
+            sans: 
+              - "*.home.ohmymndy.com"
+
+# log:
+  # level: DEBUG
+
+api:
+  insecure: true
+  dashboard: true
+
+serversTransport:
+  insecureSkipVerify: true
+
+
+providers:
+  providersThrottleDuration: 10
+  docker:
+    exposedByDefault: false
+    network: reverse-proxy
+    constraints: "!Label(`traefik.tags`, `traefik-public`) || Label(`traefik.tags`, `traefik-both`)"
+  file:
+    watch: true
+    directory: /etc/traefik/dynamic
+
+certificatesResolvers:
+  ohmymndy:
+    acme:
+      email: mandyschoep@gmail.com
+      storage: /etc/traefik/acme.json
+      dnsChallenge:
+        provider: "cloudflare"
+        delayBeforeCheck: 10
+        resolvers:
+          - "1.1.1.1:53"
+          - "8.8.8.8:53"

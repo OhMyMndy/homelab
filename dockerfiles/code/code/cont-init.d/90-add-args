@@ -1,4 +1,0 @@
-#!/usr/bin/with-contenv bash
-
-# --enable-proposed-api=ms-vscode-remote.remote-ssh 
-sed -i 's#\(code-server\)\s*\\#\1 --enable-proposed-api=ms-vscode-remote.remote-containers \\##' /etc/services.d/code-server/run

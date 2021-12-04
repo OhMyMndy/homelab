@@ -1,0 +1,28 @@
+services:
+
+  vaultwarden:
+    image: bitwardenrs/server
+    restart: unless-stopped
+    init: true
+    networks:
+      - default
+      - reverse-proxy
+    environment:
+      - ADMIN_TOKEN=${BITWARDEN_ADMIN_TOKEN:?}
+      - SMTP_PASSWORD=${BITWARDEN_SMTP_PASSWORD:?}
+      - SMTP_USERNAME=${SMTP_USERNAME:?}
+    volumes:
+      - ./storage/vaultwarden:/data/:rw
+    labels:
+      - "traefik.docker.network=default"
+      - "traefik.http.routers.bitwarden.rule=Host(`passwords.home.ohmymndy.com`)"
+      - "traefik.http.routers.bitwarden.tls=true"
+      - "traefik.enable=true"
+
+
+
+networks:
+  default:
+  reverse-proxy:
+    external:
+      name: reverse-proxy

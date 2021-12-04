@@ -1,0 +1,22 @@
+services:
+
+  minecraft-bedrock-server:
+    image: itzg/minecraft-bedrock-server
+    environment:
+      - UID=${PUID:?}
+      - GID=${PGID:?}
+      - EULA=TRUE
+      - GAMEMODE=survival
+      - DIFFICULTY=easy
+      - OPS=${OPS:?} #https://xapi.us/v2/xuid/UserName
+      - WHITE_LIST_USERS=${WHITE_LIST_USERS:?}
+      - SERVER_NAME=${SERVER_NAME:?}
+      - MAX_PLAYERS=3
+    ports:
+      - 19132:19132/udp
+      - 19132:19132/tcp
+    volumes:
+      - ./storage/minecraft-bedrock:/data
+    stdin_open: true
+    restart: unless-stopped
+    tty: true

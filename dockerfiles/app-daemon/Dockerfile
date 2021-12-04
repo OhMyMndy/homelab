@@ -1,1 +1,0 @@
-FROM acockburn/appdaemon:latest

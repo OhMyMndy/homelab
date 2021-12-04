@@ -1,0 +1,29 @@
+services:
+  traefik:
+    image: traefik:v2.4
+    restart: unless-stopped
+    init: true
+    env_file: 
+      - ./.env
+      - ../.env-cloudflare
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./etc/traefik:/etc/traefik
+    ports:
+      - 80:80
+      - 443:443
+    labels:
+      - "traefik.docker.network=default"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.home.ohmymndy.com`)"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.middlewares=auth-both@file"
+    extra_hosts: 
+      - host.docker.internal:172.17.0.1
+    networks:
+      - default
+
+networks:
+  default:
+    name: reverse-proxy
+  
