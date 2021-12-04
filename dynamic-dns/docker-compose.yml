@@ -1,0 +1,13 @@
+services:
+  ddclient:
+    image: lscr.io/linuxserver/ddclient
+    init: true
+    restart: unless-stopped
+    env_file:
+      - ../.env-cloudflare
+    environment:
+      - PUID=${PUID:?}
+      - PGID=${PUID:?}
+      - TZ=${PUID:?}
+    volumes:
+      - ./etc/ddclient:/config
