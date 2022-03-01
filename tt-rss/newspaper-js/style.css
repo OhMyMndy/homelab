@@ -1,0 +1,65 @@
+* {
+    font-family: 'Times New Roman', Times, serif;
+    box-sizing: border-box;
+    letter-spacing: 0.02em;
+    line-height: 1.3em;
+    text-align: justify;
+}
+blockquote, pre {
+	overflow: scroll;
+}
+
+blockquote *, pre * {
+	font-family: 'Courier New', Courier, monospace
+}
+
+h1, h2, h3, h4{
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+p {
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+body {
+    overflow-y: hidden;
+    margin: 0;
+}
+
+.newspaper-3 a {
+    color: black;
+}
+
+.newpaper-3 {
+    padding: 10px;
+    column-width: 0px;
+    /* it has to be set... */
+    column-count: 3;
+    column-gap: 20px;
+    column-fill: balance;
+    display: inline-block;
+}
+
+.newpaper-3 img {
+    display: inline;
+    max-width: 100%;
+}
+
+.newpaper-3 h2 {
+    font-size: 20px;
+}
+
+.newpaper-3 h2.article-title {
+    font-size: 30px;
+}
+
+.newpaper-3 h2.article-title :any-link {
+    color: black !important;
+}
+
+.newpaper-3 blockquote {
+    font-style: italic;
+    margin-inline-start: 10px;
+    margin-inline-end: 10px;
+}

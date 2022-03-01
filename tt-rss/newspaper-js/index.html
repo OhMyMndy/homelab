@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>News!</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/2.3.0/alpine.js"></script>
+    <script src="newspaper/main.js"></script>
+    <link rel="stylesheet" href="newspaper/style.css">
+</head>
+
+<body>
+    <div x-data="data()" x-init="init()">
+        <div x-show="content.error != null">
+            Error:
+            <span x-text="content.error"></span>
+        </div>
+
+        <div class="newpaper-3">
+            <template x-for="article in content" x-if="!content.error && content.length > 0">
+                <div>
+                    <h2 class="article-title"><a x-bind:href="article.link" target="_blank"><span
+                                x-text="article.title"></span></a></h2>
+                    <small>Published by <span x-text="article.feed_title"></span> on <span
+                            x-text="new Date(article.updated * 1000).toLocaleDateString()"></span></small>
+
+                    <div x-html="article.content"></div>
+                    <div>
+                        <a x-on:click="markAsRead(article.id)">Mark as read</a>
+                    </div>
+                    <hr />
+                </div>
+            </template>
+        </div>
+    </div>
+
+</body>
+
+
+</html>
