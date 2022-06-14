@@ -1,0 +1,12 @@
+services:
+  rclone:
+    image: rclone/rclone
+    init: true
+    volumes:
+      - source: $HOME/Obsidian
+        target: /target/Obsidian
+        type: bind
+      - source: ./storage/rclone
+        target: /config/rclone
+        type: bind
+    command: copy obsidian:/ /target/Obsidian

@@ -1,0 +1,11 @@
+services:
+  obsidian:
+    image: ohmymndy/kasm-obsidian
+    restart: unless-stopped
+    init: true
+    ports:
+      - 6901:6901
+    volumes:
+      - source: $HOME/Obsidian
+        target: /root/Obsidian
+        type: bind
