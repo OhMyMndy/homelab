@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: firefly
+  namespace: firefly
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  destination:
+    namespace: firefly
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: firefly-iii
+    repoURL: https://firefly-iii.github.io/kubernetes/
+    targetRevision: firefly-iii-stack-0.7.2
