@@ -30,7 +30,8 @@ fi
 argocd app create applications \
     --repo https://github.com/ohmymndy/homelab.git \
     --revision k8s \
-    --path argocd --dest-server https://kubernetes.default.svc --dest-namespace default
+    --path argocd --dest-server https://kubernetes.default.svc --dest-namespace default \
+    --sync-policy auto
 # helm repo add firefly-iii https://firefly-iii.github.io/kubernetes/
 # helm repo updatehelm repo add firefly-iii https://firefly-iii.github.io/kubernetes/
 # helm repo update
