@@ -3,8 +3,8 @@ kind: Application
 metadata:
   name: firefly
   namespace: argocd
-  finalizers:
-  - resources-finalizer.argocd.argoproj.io
+#   finalizers:
+#   - resources-finalizer.argocd.argoproj.io
 spec:
   destination:
     namespace: firefly
@@ -15,6 +15,6 @@ spec:
     repoURL: https://firefly-iii.github.io/kubernetes/
     targetRevision: firefly-iii-stack-0.7.2
     syncPolicy:
-  automated:
-    prune: true
-    selfHeal: true
+      automated:
+        prune: true
+        selfHeal: true

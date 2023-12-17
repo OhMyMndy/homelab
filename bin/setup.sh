@@ -26,6 +26,8 @@ if kubectl get secret -n argocd argocd-initial-admin-secret &>/dev/null; then
     kubectl delete secret -n argocd argocd-initial-admin-secret 
 fi
 
+
+# kubectl patch app APP_NAME -p '{"metadata": {"finalizers": null}}' --type merge
 # TODO make revision variable so it can be tested with other branches
 argocd app create applications \
     --repo https://github.com/ohmymndy/homelab.git \
