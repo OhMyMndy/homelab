@@ -9,7 +9,7 @@ spec:
   destination:
     namespace: firefly
     server: https://kubernetes.default.svc
-  project: firefly
+  project: applications
   source:
     # path: firefly-iii
     repoURL: https://firefly-iii.github.io/kubernetes/
