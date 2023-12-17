@@ -1,0 +1,10 @@
+{
+    "recommendations": [
+        "xyz.local-history",
+        "skellock.just",
+        "eamodio.gitlens",
+        "github.vscode-pull-request-github",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "redhat.vscode-yaml"
+    ]
+}
