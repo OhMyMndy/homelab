@@ -31,7 +31,7 @@ services:
       - "traefik.docker.network=default"
       - "traefik.http.routers.tt-rss.rule=Host(`tt-rss.home.ohmymndy.com`)"
       - "traefik.http.routers.tt-rss.tls=true"
-      - "traefik.http.middlewares.corsheader.headers.accesscontrolalloworigin=*"
+      - "traefik.http.middlewares.corsheader.headers.accessControlAllowOriginList=*"
       - "traefik.http.routers.tt-rss.middlewares=corsheader"
       - "traefik.enable=true"
 
@@ -45,7 +45,7 @@ services:
       - reverse-proxy
     restart: unless-stopped
     labels:
-      - "traefik.docker.network=default"
+      - "traefik.docker.network=reverse-proxy"
       - "traefik.http.routers.newspaper.rule=Host(`tt-rss.home.ohmymndy.com`) && PathPrefix(`/newspaper`)"
       - "traefik.http.routers.newspaper.tls=true"
       - "traefik.http.middlewares.stripprefix.stripprefix.prefixes=/newspaper"
@@ -55,5 +55,5 @@ services:
 networks:
   default:
   reverse-proxy:
-    external:
-      name: reverse-proxy
+    name: reverse-proxy
+    external: true
