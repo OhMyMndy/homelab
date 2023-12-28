@@ -12,7 +12,7 @@ cd "$DIR"
 
 (cd vaultwarden && docker-compose up -d)
 
-(cd minecraft-bedrock-server && docker-compose up -d)
+# (cd minecraft-bedrock-server && docker-compose up -d)
 
 (cd firefly && docker-compose up -d)
 

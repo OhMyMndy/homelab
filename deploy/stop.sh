@@ -12,7 +12,7 @@ cd "$DIR"
 
 (cd vaultwarden && docker-compose stop)
 
-(cd minecraft-bedrock-server && docker-compose stop)
+# (cd minecraft-bedrock-server && docker-compose stop)
 
 (cd firefly && docker-compose stop)
 
