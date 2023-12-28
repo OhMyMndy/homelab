@@ -1,0 +1,67 @@
+
+services:
+  db:
+    image: mariadb:11.2
+    init: true
+    env_file: ./.env
+    restart: unless-stopped
+    volumes:
+      - ./storage/mysql/:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+
+
+  app:
+    image: fireflyiii/core:latest
+    init: true
+  
+    env_file:
+      - .env
+    environment:
+      - PUID=${PUID:?}
+      - PGID=${PGID:?}
+      - TZ=${TZ:-Europe/Brussels}
+    volumes:
+      - ./storage/firefly:/var/www/html/storage/upload
+  
+    networks:
+      - default
+      - reverse-proxy
+    restart: unless-stopped
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.firefly.rule=Host(`firefly.home.ohmymndy.com`)"
+      - "traefik.http.routers.firefly.tls=true"
+      - "traefik.enable=true"
+  importer:
+    image: fireflyiii/data-importer:latest
+    init: true
+    restart: unless-stopped
+    networks:
+      - default
+      - reverse-proxy
+    depends_on:
+      - app
+    env_file: .env-importer
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.firefly-data-importer.rule=Host(`firefly-data-importer.home.ohmymndy.com`)"
+      - "traefik.http.routers.firefly-data-importer.tls=true"
+      - "traefik.enable=true"
+  cron:
+    #
+    # To make this work, set STATIC_CRON_TOKEN in your .env file or as an environment variable and replace REPLACEME below
+    # The STATIC_CRON_TOKEN must be *exactly* 32 characters long
+    #
+    image: alpine
+    restart: always
+    env_file:
+      - .env
+    command: sh -c "echo \"0 3 * * * wget -qO- http://app:8080/api/v1/cron/${STATIC_CRON_TOKEN}\" | crontab - && crond -f -L /dev/stdout"
+    networks:
+      - default
+
+networks:
+  default:
+  reverse-proxy:
+    name: reverse-proxy
+    external: true
