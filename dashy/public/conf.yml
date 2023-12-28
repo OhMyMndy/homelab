@@ -1,0 +1,61 @@
+pageInfo:
+  title: Home Lab
+sections:
+  - name: Online services
+    icon: far fa-rocket
+    items:
+      - &ref_0
+        title: GitHub
+        description: GitHub
+        icon: fab fa-github
+        url: https://github.com
+        id: 0_1513_github
+      - &ref_1
+        title: Issues
+        description: View issues
+        icon: fas fa-bug
+        url: https://ohmymndy.atlassian.net
+        id: 1_1513_issues
+    filteredItems:
+      - *ref_0
+      - *ref_1
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+  - name: Local Services
+    items:
+      - &ref_2
+        title: Firewall
+        icon: >-
+          https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/TPLINK_Logo_2.svg/2560px-TPLINK_Logo_2.svg.png
+        url: https://10.0.40.101
+        id: 0_1359_firewall
+      - &ref_3
+        title: Bitwarden
+        icon: >-
+          https://static-00.iconduck.com/assets.00/bitwarden-v2-icon-512x512-cstnj11p.png
+        url: https://passwords.home.ohmymndy.com
+        id: 1_1359_bitwarden
+      - &ref_4
+        title: Adguard
+        icon: https://avatars3.githubusercontent.com/u/8361145?s=200&v=4
+        url: https://adguard.home.ohmymndy.com
+        id: 2_1359_adguard
+      - &ref_5
+        title: Traefik
+        icon: >-
+          https://doc.traefik.io/traefik/assets/img/traefikproxy-vertical-logo-color.svg
+        url: https://traefik.home.ohmymndy.com
+        id: 3_1359_traefik
+    filteredItems:
+      - *ref_2
+      - *ref_3
+      - *ref_4
+      - *ref_5
+appConfig:
+  language: en
+  layout: auto
+  iconSize: medium
