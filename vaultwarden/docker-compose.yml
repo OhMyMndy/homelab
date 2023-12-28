@@ -1,7 +1,7 @@
 services:
 
   vaultwarden:
-    image: bitwardenrs/server
+    image: vaultwarden/server:1.28.1
     restart: unless-stopped
     init: true
     networks:
@@ -14,9 +14,9 @@ services:
     volumes:
       - ./storage/vaultwarden:/data/:rw
     labels:
-      - "traefik.docker.network=default"
       - "traefik.http.routers.bitwarden.rule=Host(`passwords.home.ohmymndy.com`)"
       - "traefik.http.routers.bitwarden.tls=true"
+      - "traefik.docker.network=reverse-proxy"
       - "traefik.enable=true"
 
 
@@ -24,5 +24,5 @@ services:
 networks:
   default:
   reverse-proxy:
-    external:
-      name: reverse-proxy
+    name: reverse-proxy
+    external: true
