@@ -1,6 +1,6 @@
 services:
   traefik:
-    image: traefik:v2.4
+    image: traefik:v2.10
     restart: unless-stopped
     init: true
     env_file: 
@@ -17,9 +17,9 @@ services:
       - "traefik.http.routers.traefik.rule=Host(`traefik.home.ohmymndy.com`)"
       - "traefik.http.services.traefik.loadbalancer.server.port=8080"
       - "traefik.enable=true"
-      - "traefik.http.routers.traefik.middlewares=auth-both@file"
+        #      - "traefik.http.routers.traefik.middlewares=auth-both@file"
     extra_hosts: 
-      - host.docker.internal:172.17.0.1
+      - host.docker.internal:host-gateway
     networks:
       - default
 
