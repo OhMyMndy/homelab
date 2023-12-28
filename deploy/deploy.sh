@@ -13,3 +13,9 @@ cd "$DIR"
 (cd vaultwarden && docker-compose up -d)
 
 (cd minecraft-bedrock-server && docker-compose up -d)
+
+(cd firefly && docker-compose up -d)
+
+(cd dashy && docker-compose up -d) 
+
+(cd adguard && docker-compose up -d)
