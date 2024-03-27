@@ -21,4 +21,10 @@ TAILSCALE_IP="$(ip -f inet addr show tailscale0 | sed -En -e 's/.*inet ([0-9.]+)
 
 (cd dashy && docker-compose up -d) 
 
-(cd adguard && docker-compose up -d)
+( cd authentik;
+if [[ ! -f .env ]]; then
+    echo "PG_PASS=$(openssl rand -base64 36)" >> .env;
+    echo "AUTHENTIK_SECRET_KEY=$(openssl rand -base64 36)" >> .env;
+fi;
+docker-compose up -d --remove-orphans
+)
