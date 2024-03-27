@@ -122,6 +122,10 @@ filters:
     url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_50.txt
     name: uBlock₀ filters – Badware risks
     id: 1703773894
+  - enabled: true
+    url: https://raw.githubusercontent.com/laylavish/uBlockOrigin-HUGE-AI-Blocklist/main/list_uBlacklist.txt
+    name: Huge AI block list
+    id: 1707668042
 whitelist_filters: []
 user_rules: []
 dhcp:
