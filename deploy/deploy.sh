@@ -1,13 +1,10 @@
 #!/usr/bin/env bash
 
-
 DIR="$(dirname "$(readlink -f "$0")")/../"
 
-cd "$DIR"
+cd "$DIR" || exit
 
-export TAILSCALE_IP
-
-TAILSCALE_IP="$(ip -f inet addr show tailscale0 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p')"
+source deploy/functions.sh
 
 (cd reverse-proxy && docker-compose up -d --remove-orphans)
 
@@ -22,6 +19,8 @@ TAILSCALE_IP="$(ip -f inet addr show tailscale0 | sed -En -e 's/.*inet ([0-9.]+)
 (cd dashy && docker-compose up -d --remove-orphans) 
 
 (cd adguard && docker-compose up -d --remove-orphans)
+
+(cd kestra && docker-compose up -d --remove-orphans)
 
 (cd portainer && docker-compose up -d --remove-orphans)
 
