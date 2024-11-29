@@ -1,0 +1,45 @@
+---
+# SEE: https://docs.ansible.com/ansible/2.8/user_guide/playbooks_best_practices.html
+- name: Tailscale
+  hosts: tailscale_subnet_router
+
+  tasks:
+    - name: Gather the package facts
+      ansible.builtin.package_facts:
+        manager: auto
+
+    # Reboot because the dev/net mount is not there since the pre-start hook is not executed when creating
+    - name: Reboot
+      ansible.builtin.reboot:
+        reboot_timeout: 60
+      when: "'tailscale' not in ansible_facts.packages"
+
+    - name: Install Tailscale with key
+      ansible.builtin.include_role:
+        name: artis3n.tailscale
+      timeout: 60
+      vars:
+        tailscale_authkey: "{{ lookup('env', 'TAILSCALE_KEY') }}"
+        tailscale_args: "--ssh --advertise-routes=10.0.40.0/23"
+      when: lookup('env', 'TAILSCALE_KEY') != ''
+
+    - name: Install Tailscale without key
+      ansible.builtin.include_role:
+        name: artis3n.tailscale
+      timeout: 60
+      vars:
+        tailscale_up_skip: true
+      when: lookup('env', 'TAILSCALE_KEY') == ''
+    - name: Set net.ipv4.ip_forward to 1
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: "1"
+        state: present
+        reload: yes
+
+    - name: Set net.ipv6.conf.all.forwarding to 1
+      sysctl:
+        name: net.ipv6.conf.all.forwarding
+        value: "1"
+        state: present
+        reload: yes
