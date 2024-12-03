@@ -1,0 +1,59 @@
+services:
+  redis:
+    image: docker.io/valkey/valkey:8-alpine
+    command: valkey-server --save 30 1 --loglevel warning
+    restart: unless-stopped
+    volumes:
+      - redis:/data
+    mem_limit: 256M
+    cpus: 0.25
+    # cap_drop:
+    #   - ALL
+    # cap_add:
+    #   - SETGID
+    #   - SETUID
+    #   - DAC_OVERRIDE
+    # logging:
+    #   driver: "json-file"
+    #   options:
+    #     max-size: "1m"
+    #     max-file: "1"
+
+  searxng:
+    image: docker.io/searxng/searxng:latest
+    restart: unless-stopped
+    volumes:
+      - searxng:/etc/searxng:rw
+    environment:
+      - SEARXNG_BASE_URL=https://searxng.home.ohmymndy.com
+      - UWSGI_WORKERS=${SEARXNG_UWSGI_WORKERS:-4}
+      - UWSGI_THREADS=${SEARXNG_UWSGI_THREADS:-4}
+    # cap_drop:
+    #   - ALL
+    # cap_add:
+    #   - CHOWN
+    #   - SETGID
+    #   - SETUID
+    networks:
+      - default
+      - reverse-proxy
+    mem_limit: 1G
+    cpus: 0.25
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.searxng.rule=Host(`searxng.home.ohmymndy.com`)"
+      - "traefik.http.routers.searxng.tls=true"
+      - "traefik.enable=true"
+      - kompose.service.expose=searxng.home.ohmymndy.com
+      - kompose.service.healthcheck.liveness.http_get_port=8080
+      - kompose.service.expose.ingress-class-name=cilium
+
+networks:
+  default:
+  reverse-proxy:
+    name: reverse-proxy
+    external: true
+
+volumes:
+  redis:
+  searxng:
