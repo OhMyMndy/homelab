@@ -1,59 +1,96 @@
 
 services:
-  mysql:
-    image: mariadb:10.4
-    init: true
-    env_file: ./.env
+  db:
+    image: postgres:15-alpine
     restart: unless-stopped
-    volumes:
-      - ./storage/mysql/:/var/lib/mysql
-      - /etc/localtime:/etc/localtime:ro
-
-
-  tt-rss:
-    image: registry.gitlab.com/lunik1/docker-tt-rss
     init: true
-    cap_add:
-      - SYS_ADMIN
     env_file:
       - .env
+    networks:
+      - default
     environment:
-      - PUID=${PUID:?}
-      - PGID=${PGID:?}
-      - TZ=${TZ:-Europe/Brussels}
+      - POSTGRES_USER=${TTRSS_DB_USER}
+      - POSTGRES_PASSWORD=${TTRSS_DB_PASS}
+      - POSTGRES_DB=${TTRSS_DB_NAME}
     volumes:
-      - ./etc/tt-rss/cont-init.d/100-remove-locks:/etc/cont-init.d/100-remove-locks
-    networks:
-      - default
-      - reverse-proxy
-    restart: unless-stopped
-    labels:
-      - "traefik.docker.network=default"
-      - "traefik.http.routers.tt-rss.rule=Host(`tt-rss.home.ohmymndy.com`)"
-      - "traefik.http.routers.tt-rss.tls=true"
-      - "traefik.http.middlewares.corsheader.headers.accessControlAllowOriginList=*"
-      - "traefik.http.routers.tt-rss.middlewares=corsheader"
-      - "traefik.enable=true"
+      - ./storage/db:/var/lib/postgresql/data
 
-  newspaper:
-    image: nginx:latest
-    init: true
+  app:
+    image: cthulhoo/ttrss-fpm-pgsql-static:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - default
     volumes:
-      - ./newspaper-js:/usr/share/nginx/html/:ro
+      - ./storage/app:/var/www/html
+      - ./config.d:/opt/tt-rss/config.d:ro
+    depends_on:
+      - db
+
+#  optional, makes weekly backups of your install
+  backups:
+    image: cthulhoo/ttrss-fpm-pgsql-static:latest
+    restart: unless-stopped
+    init: true
+    env_file:
+      - .env
+    networks:
+      - default
+    volumes:
+      - ./storage/backups:/backups
+      - ./storage/app:/var/www/html
+    depends_on:
+      - db
+    command: /opt/tt-rss/dcron.sh -f
+
+  updater:
+    image: cthulhoo/ttrss-fpm-pgsql-static:latest
+    restart: unless-stopped
+    init: true
+    env_file:
+      - .env
+    networks:
+      - default
+    volumes:
+      - ./storage/app:/var/www/html
+      - ./config.d:/opt/tt-rss/config.d:ro
+    depends_on:
+      - app
+    command: /opt/tt-rss/updater.sh
+
+  web-nginx:
+    image: cthulhoo/ttrss-web-nginx:latest
+    restart: unless-stopped
+    init: true
+    env_file:
+      - .env
+    volumes:
+      - ./storage/app:/var/www/html:ro
+    depends_on:
+      - app
+
+  proxy:
+    image: nginx
+    restart: unless-stopped
+    init: true
+    depends_on:
+    - web-nginx 
+    volumes:
+      - ./etc/proxy.conf:/etc/nginx/conf.d/default.conf
     networks:
       - default
       - reverse-proxy
-    restart: unless-stopped
     labels:
       - "traefik.docker.network=reverse-proxy"
-      - "traefik.http.routers.newspaper.rule=Host(`tt-rss.home.ohmymndy.com`) && PathPrefix(`/newspaper`)"
-      - "traefik.http.routers.newspaper.tls=true"
-      - "traefik.http.middlewares.stripprefix.stripprefix.prefixes=/newspaper"
-      - "traefik.http.routers.newspaper.middlewares=stripprefix"
+      - "traefik.http.routers.tt-rss.rule=Host(`tt-rss.home.ohmymndy.com`)"
+      - "traefik.http.routers.tt-rss.tls=true"
+      # - "traefik.http.middlewares.corsheader.headers.accessControlAllowOriginList=*"
+      # - "traefik.http.routers.tt-rss.middlewares=corsheader"
       - "traefik.enable=true"
 
 networks:
   default:
   reverse-proxy:
-    name: reverse-proxy
     external: true
+    name: reverse-proxy
