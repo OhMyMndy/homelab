@@ -9,3 +9,5 @@
 acme.json*
 docker-compose.override.yml
 !.keep
+backups
+*.tar.gz
