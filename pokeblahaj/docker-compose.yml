@@ -1,0 +1,58 @@
+services:
+  app:
+    image: nocobase/nocobase:latest
+    depends_on:
+      - postgres
+    environment:
+      # The application's secret key, used to generate user tokens, etc.
+      # If APP_KEY is changed, old tokens will also become invalid.
+      # It can be any random string, and make sure it is not exposed.
+      - APP_KEY=${API_KEY:?}
+      # Database type, supports postgres, mysql, mariadb
+      - DB_DIALECT=postgres
+      # Database host, can be replaced with the IP of an existing database server
+      - DB_HOST=postgres
+      # Database name
+      - DB_DATABASE=nocobase
+      # Database user
+      - DB_USER=nocobase
+      # Database password
+      - DB_PASSWORD=${DB_PASSWORD:?}
+      # Timezone
+      - TZ=Europe/Brussels
+    volumes:
+      - ./storage:/app/nocobase/storage
+    # ports:
+      # - "13000:80"
+    # init: true
+    networks:
+      - default
+      - reverse-proxy
+    # mem_limit: 1G
+    # cpus: 0.25
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.pokeblahaj.rule=Host(`pokeblahaj.home.ohmymndy.com`)"
+      - "traefik.http.routers.pokeblahaj.tls=true"
+      - "traefik.enable=true"
+      # - kompose.service.expose=pokeblahaj.home.ohmymndy.com
+      # - kompose.service.healthcheck.liveness.http_get_port=8080
+      # - kompose.service.expose.ingress-class-name=cilium
+  # If using an existing database server, postgres service can be omitted
+  postgres:
+    image: postgres:16
+    restart: always
+    command: postgres -c wal_level=logical
+    environment:
+      POSTGRES_USER: nocobase
+      POSTGRES_DB: nocobase
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?}
+    volumes:
+      - ./storage/db/postgres:/var/lib/postgresql/data
+
+networks:
+  default:
+  reverse-proxy:
+    name: reverse-proxy
+    external: true
+
