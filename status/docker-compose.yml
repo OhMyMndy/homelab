@@ -1,0 +1,21 @@
+name: status
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:1.23.15
+    volumes:
+      - ./storage/uptime-kuma:/app/data
+    networks:
+      - default
+      - reverse-proxy
+    restart: unless-stopped
+    labels:
+      - "traefik.http.routers.uptime-kuma.rule=Host(`status.home.ohmymndy.com`)"
+      - "traefik.http.routers.uptime-kuma.tls=true"
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.enable=true"
+    init: true
+networks:
+  default:
+  reverse-proxy:
+    name: reverse-proxy
+    external: true
