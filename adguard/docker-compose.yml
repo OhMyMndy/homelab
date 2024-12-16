@@ -1,18 +1,19 @@
-version: "3.8"
+name: adguard
 services:
   app:
-    image: adguard/adguardhome:v0.107.43
+    image: adguard/adguardhome:v0.107.54
     volumes:
-    - ./storage/work:/opt/adguardhome/work
-    - ./config:/opt/adguardhome/conf
-    restart: unless-stopped
-    init: true
+      - ./storage/work:/opt/adguardhome/work
+      - ./config:/opt/adguardhome/conf
+    ports:
+      - '${LOCAL_IP}:53:53/tcp'
+      - '${LOCAL_IP}:53:53/udp'
+      - '${TAILSCALE_IP:?}:53:53/tcp'
+      - '${TAILSCALE_IP:?}:53:53/udp'
     networks:
       - default
       - reverse-proxy
-    ports:
-      - ${TAILSCALE_IP:?}:53:53/tcp
-      - ${TAILSCALE_IP:?}:53:53/udp
+    restart: unless-stopped
     labels:
       - "traefik.docker.network=reverse-proxy"
       - "traefik.http.routers.adguard.rule=Host(`adguard.home.ohmymndy.com`)"
@@ -21,7 +22,7 @@ services:
       # - "traefik.http.services.adguard.loadbalancer.server.port=3000"
       - "traefik.http.routers.adguard.tls=true"
       - "traefik.enable=true"
-
+    init: true
 
 networks:
   default:
