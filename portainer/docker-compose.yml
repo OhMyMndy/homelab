@@ -1,14 +1,14 @@
+name: portainer
 services:
-
   portainer:
-    image: portainer/portainer-ce
-    command: -H unix:///var/run/docker.sock
+    image: portainer/portainer-ce:2.25.0
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./storage/portainer:/data
     networks:
       - default
       - reverse-proxy
+    command: -H unix:///var/run/docker.sock
     restart: unless-stopped
     labels:
       - "traefik.docker.network=reverse-proxy"
