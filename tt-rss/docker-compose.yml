@@ -1,86 +1,59 @@
-
 services:
-  db:
-    image: postgres:15-alpine
-    restart: unless-stopped
-    init: true
+  app:
+    image: cthulhoo/ttrss-fpm-pgsql-static:eb470473
+    depends_on:
+      - db
+    volumes:
+      - ./storage/app:/var/www/html
+      - ./config.d:/opt/tt-rss/config.d:ro
     env_file:
       - .env
     networks:
       - default
+    restart: unless-stopped
+
+  #  optional, makes weekly backups of your install
+  backups:
+    image: cthulhoo/ttrss-fpm-pgsql-static:eb470473
+    depends_on:
+      - db
+    volumes:
+      - ./storage/backups:/backups
+      - ./storage/app:/var/www/html
+    env_file:
+      - .env
+    networks:
+      - default
+    command: /opt/tt-rss/dcron.sh -f
+    restart: unless-stopped
+    init: true
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - ./storage/db:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=${TTRSS_DB_USER}
       - POSTGRES_PASSWORD=${TTRSS_DB_PASS}
       - POSTGRES_DB=${TTRSS_DB_NAME}
-    volumes:
-      - ./storage/db:/var/lib/postgresql/data
-
-  app:
-    image: cthulhoo/ttrss-fpm-pgsql-static:latest
-    restart: unless-stopped
     env_file:
       - .env
     networks:
       - default
-    volumes:
-      - ./storage/app:/var/www/html
-      - ./config.d:/opt/tt-rss/config.d:ro
-    depends_on:
-      - db
-
-#  optional, makes weekly backups of your install
-  backups:
-    image: cthulhoo/ttrss-fpm-pgsql-static:latest
     restart: unless-stopped
     init: true
-    env_file:
-      - .env
-    networks:
-      - default
-    volumes:
-      - ./storage/backups:/backups
-      - ./storage/app:/var/www/html
-    depends_on:
-      - db
-    command: /opt/tt-rss/dcron.sh -f
-
-  updater:
-    image: cthulhoo/ttrss-fpm-pgsql-static:latest
-    restart: unless-stopped
-    init: true
-    env_file:
-      - .env
-    networks:
-      - default
-    volumes:
-      - ./storage/app:/var/www/html
-      - ./config.d:/opt/tt-rss/config.d:ro
-    depends_on:
-      - app
-    command: /opt/tt-rss/updater.sh
-
-  web-nginx:
-    image: cthulhoo/ttrss-web-nginx:latest
-    restart: unless-stopped
-    init: true
-    env_file:
-      - .env
-    volumes:
-      - ./storage/app:/var/www/html:ro
-    depends_on:
-      - app
 
   proxy:
-    image: nginx
-    restart: unless-stopped
-    init: true
+    image: nginx:1.27.3
     depends_on:
-    - web-nginx 
+      - web-nginx
     volumes:
       - ./etc/proxy.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "80"
     networks:
       - default
       - reverse-proxy
+    restart: unless-stopped
     labels:
       - "traefik.docker.network=reverse-proxy"
       - "traefik.http.routers.tt-rss.rule=Host(`tt-rss.home.ohmymndy.com`)"
@@ -88,6 +61,33 @@ services:
       # - "traefik.http.middlewares.corsheader.headers.accessControlAllowOriginList=*"
       # - "traefik.http.routers.tt-rss.middlewares=corsheader"
       - "traefik.enable=true"
+    init: true
+
+  updater:
+    image: cthulhoo/ttrss-fpm-pgsql-static:eb470473
+    depends_on:
+      - app
+    volumes:
+      - ./storage/app:/var/www/html
+      - ./config.d:/opt/tt-rss/config.d:ro
+    env_file:
+      - .env
+    networks:
+      - default
+    command: /opt/tt-rss/updater.sh
+    restart: unless-stopped
+    init: true
+
+  web-nginx:
+    image: cthulhoo/ttrss-web-nginx:472058e0
+    depends_on:
+      - app
+    volumes:
+      - ./storage/app:/var/www/html:ro
+    env_file:
+      - .env
+    restart: unless-stopped
+    init: true
 
 networks:
   default:
