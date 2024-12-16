@@ -1,0 +1,41 @@
+name: openwebui
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:0.4.8
+    volumes:
+      - ./storage/open-webui:/app/backend/data
+    env_file:
+      - .env
+    networks:
+      - default
+      - reverse-proxy
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    restart: unless-stopped
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.openwebui.rule=Host(`openwebui.home.ohmymndy.com`)"
+      - "traefik.http.routers.openwebui.tls=true"
+      - "traefik.enable=true"
+  pipelines:
+    image: ghcr.io/open-webui/pipelines:git-1367d95
+    volumes:
+      - ./storage/pipelines:/app/pipelines
+    networks:
+      - default
+      - reverse-proxy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.openwebui-pipelines.rule=Host(`openwebui-pipeline\
+        s.home.ohmymndy.com`)"
+      - "traefik.http.routers.openwebui-pipelines.tls=true"
+      - "traefik.enable=true"
+
+networks:
+  default:
+  reverse-proxy:
+    name: reverse-proxy
+    external: true
