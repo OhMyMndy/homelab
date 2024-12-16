@@ -1,0 +1,12 @@
+name: humblebundle-downloader
+services:
+  downloader:
+    image: ghcr.io/xtream1101/humblebundle-downloader:0.4.3
+    volumes:
+      - ./run.sh:/run.sh:ro
+      - $HOME/HumbleBundle Ebooks:/library
+    env_file:
+      - .env
+    entrypoint: /run.sh
+    restart: unless-stopped
+    user: "${PUID:?}:${PGID:?}"
