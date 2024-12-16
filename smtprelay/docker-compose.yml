@@ -1,0 +1,17 @@
+services:
+  smtprelay:
+    image: grafana/smtprelay:2.1.5
+    restart: unless-stopped
+    init: true
+    command:
+      - -remote_host=${REMOTE_HOST:?}
+      - -remote_user=${USERNAME:?}
+      - -remote_sender=${USERNAME:?}
+      - -remote_pass=${PASSWORD:?}
+      - -hostname=homelab-smtprelay
+      # - -allowed_users=${ALLOWED_USERS:?}
+      - -listen=${LISTEN:?}
+
+networks:
+  default:
+    name: smtprelay
