@@ -1,0 +1,49 @@
+name: litellm
+services:
+  db:
+    image: postgres:16
+    volumes:
+      - ./storage/postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: litellm
+      POSTGRES_DB: litellm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+    env_file:
+      - .env
+    command: postgres -c wal_level=logical
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d litellm -U litellm"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+  litellm:
+    image: ghcr.io/berriai/litellm:main-v1.53.1
+    volumes:
+      - ./litellm-config.yaml:/app/config.yaml
+    environment:
+      DATABASE_URL: "postgresql://litellm:${POSTGRES_PASSWORD:?}@db:5432/litellm"
+      STORE_MODEL_IN_DB: "True" # allows adding models to proxy via UI
+    env_file:
+      - .env
+    networks:
+      - default
+      - reverse-proxy
+    command:
+      - "--config=/app/config.yaml"
+    restart: unless-stopped
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.litellm.rule=Host(`litellm.home.ohmymndy.com`)"
+      - "traefik.http.routers.litellm.tls=true"
+      - "traefik.enable=true"
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./litellm-config.yaml
+          target: /app/config.yaml
+networks:
+  default:
+  reverse-proxy:
+    name: reverse-proxy
+    external: true

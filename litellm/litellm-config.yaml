@@ -1,0 +1,33 @@
+model_list:
+  # TODO: https://openrouter.ai/models
+  # Paid models
+  - model_name: "mistral-large-2411"
+    litellm_params:
+      model: "openrouter/mistralai/mistral-large-2411"
+      api_key: os.environ/OPENROUTER_API_KEY
+      tags: ["paid"]
+
+  - model_name: "openai/gpt-4o-2024-11-20"
+    litellm_params:
+      model: "openrouter/openai/gpt-4o-2024-11-20"
+      api_key: os.environ/OPENROUTER_API_KEY
+      tags: ["paid"]
+
+  # Free models
+  - model_name: "google/gemini-exp-1121:free"
+    litellm_params:
+      model: "openrouter/google/gemini-exp-1121:free"
+      api_key: os.environ/OPENROUTER_API_KEY
+      model_info:
+        mode: embedding
+      tags: ["free"]
+  - model_name: "meta-llama/llama-3.1-70b-instruct:free"
+    litellm_params:
+      model: "openrouter/meta-llama/llama-3.1-70b-instruct:free"
+      api_key: os.environ/OPENROUTER_API_KEY
+      tags: ["free"]
+  - model_name: "openai/o1-mini-2024-09-12"
+    litellm_params:
+      model: "openrouter/openai/o1-mini-2024-09-12"
+      api_key: os.environ/OPENROUTER_API_KEY
+      tags: ["free"]
