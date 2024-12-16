@@ -1,0 +1,35 @@
+name: homepage
+services:
+  dockerproxy:
+    image: ghcr.io/tecnativa/docker-socket-proxy:0.3.0
+    container_name: dockerproxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - CONTAINERS=1 # Allow access to viewing containers
+      - SERVICES=1 # Allow access to viewing services (necessary when using Docker Swarm)
+      - TASKS=1 # Allow access to viewing tasks (necessary when using Docker Swarm)
+      - POST=0 # Disallow any POST operations (effectively read-only)
+    restart: unless-stopped
+  homepage:
+    image: ghcr.io/gethomepage/homepage:v0.9.13
+    container_name: homepage
+    volumes:
+      - ./config:/app/config
+    environment:
+      PUID: ${PUID:?}
+      PGID: ${PGID:?}
+    networks:
+      - default
+      - reverse-proxy
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.homepage.rule=Host(`homepage.home.ohmymndy.com`)"
+      - "traefik.http.routers.homepage.tls=true"
+      - "traefik.enable=true"
+    init: true
+networks:
+  default:
+  reverse-proxy:
+    name: reverse-proxy
+    external: true
