@@ -1,0 +1,41 @@
+name: redmine
+services:
+  postgresql:
+    image: docker.io/bitnami/postgresql:16
+    volumes:
+      - ./storage/postresql:/bitnami/postgresql
+    environment:
+      - POSTGRESQL_USERNAME=redmine
+      - POSTGRESQL_DATABASE=redmine
+      - POSTGRESQL_PASSWORD=${POSTGRESQL_PASSWORD:-?}
+    restart: unless-stopped
+
+  redmine:
+    image: docker.io/bitnami/redmine:5
+    depends_on:
+      - postgresql
+    volumes:
+      - ./storage/redmine:/bitnami/redmine
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDMINE_DATABASE_TYPE=postgresql
+      - REDMINE_DATABASE_HOST=postgresql
+      - REDMINE_DATABASE_PORT_NUMBER=5432
+      - REDMINE_DATABASE_USER=redmine
+      - REDMINE_DATABASE_PASSWORD=${POSTGRESQL_PASSWORD:-?}
+      - REDMINE_DATABASE_NAME=redmine
+    networks:
+      - default
+      - reverse-proxy
+    restart: unless-stopped
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.redmine.rule=Host(`redmine.home.ohmymndy.com`)"
+      - "traefik.http.routers.redmine.tls=true"
+      - "traefik.enable=true"
+
+networks:
+  default:
+  reverse-proxy:
+    external: true
+    name: reverse-proxy
