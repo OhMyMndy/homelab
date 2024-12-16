@@ -1,0 +1,21 @@
+TIMEZONE=Europe/Brussels
+
+UMASK=0002
+# VPN_TYPE=openvpn
+VPN_SERVICE_PROVIDER=purevpn
+VPN_USERNAME=purevpn0s27938383338
+VPN_PASSWORD=sdfklsdf93wrthjh
+SERVER_COUNTRIES=Belgium
+WEBUI_PORT_QBITTORRENT=8088
+TP_THEME=nord
+
+FOLDER_FOR_MEDIA=./storage # <-- Update for your folders - Synology Example: /volume1/docker/appdata
+FOLDER_FOR_DATA=./storage  # <-- Update for your folders - Synology Example: /volume1/media
+
+GLUETUN_CONTROL_PORT=8320
+
+LOCAL_SUBNET=10.0.0.0/16
+
+WEBUI_PORT_PLEX=32400
+WEBUI_PORT_RADARR=7878
+WEBUI_PORT_JELLYFIN=8096

@@ -1,0 +1,131 @@
+services:
+  plex:
+    image: lscr.io/linuxserver/plex:1.41.3
+    container_name: plex
+    restart: unless-stopped
+    # Add Configurations for GPU Hardware Rendering Here:
+    #    devices:
+    #      - /dev/dri/renderD128:/dev/dri/renderD128
+    #      - /dev/dri/card0:/dev/dri/card0
+    volumes:
+      - ${FOLDER_FOR_DATA:?err}/plex:/config
+      - ${FOLDER_FOR_MEDIA:?err}/media:/data/media
+    ports:
+      - "${WEBUI_PORT_PLEX:?err}:32400"
+      #      - 1900:1900/udp
+      #      - 5353:5353/udp
+      - 8324:8324
+      - 32410:32410/udp
+      - 32412:32412/udp
+      - 32413:32413/udp
+      - 32414:32414/udp
+      - 32469:32469
+    environment:
+      - PUID=${PUID:?err}
+      - PGID=${PGID:?err}
+      - UMASK=${UMASK:?err}
+      - TZ=${TIMEZONE:?err}
+      - VERSION=docker
+      - PLEX_CLAIM=${PLEX_CLAIM}
+
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    # Add Configurations for GPU Hardware Rendering Here:
+    #    devices:
+    #      - /dev/dri/renderD128:/dev/dri/renderD128
+    #      - /dev/dri/card0:/dev/dri/card0
+    volumes:
+      - ${FOLDER_FOR_DATA:?err}/jellyfin:/config
+      - ${FOLDER_FOR_MEDIA:?err}:/data
+    ports:
+      - "${WEBUI_PORT_JELLYFIN:?err}:8096"
+    #      - 7359:7359/udp      # Enable for DLNA - Only works on HOST Network Mode
+    #      - 1900:1900/udp      # Enable for DLNA - Only works on HOST Network Mode
+    environment:
+      - PUID=${PUID:?err}
+      - PGID=${PGID:?err}
+      - UMASK=${UMASK:?err}
+      - TZ=${TIMEZONE:?err}
+  #      - JELLYFIN_PublishedServerUrl=${LOCAL_DOCKER_IP:?err}  # Enable for DLNA - Only works on HOST Network Mode
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    restart: unless-stopped
+    volumes:
+      - ${FOLDER_FOR_DATA:?err}/radarr:/config
+      - ${FOLDER_FOR_MEDIA:?err}:/data
+    ports:
+      - "${WEBUI_PORT_RADARR:?err}:7878"
+    environment:
+      - PUID=${PUID:?err}
+      - PGID=${PGID:?err}
+      - TZ=${TIMEZONE:?err}
+      - DOCKER_MODS=ghcr.io/themepark-dev/theme.park:radarr
+      - TP_THEME=${TP_THEME:?err}
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    restart: unless-stopped
+    volumes:
+      - ${FOLDER_FOR_DATA:?err}/qbittorrent:/config
+      - ${FOLDER_FOR_MEDIA:?err}:/data
+    environment:
+      - PUID=${PUID:?err}
+      - PGID=${PGID:?err}
+      - UMASK=${UMASK:?err}
+      - TZ=${TIMEZONE:?err}
+      - WEBUI_PORT=${WEBUI_PORT_QBITTORRENT:?err}
+      - DOCKER_MODS=ghcr.io/themepark-dev/theme.park:qbittorrent
+      - TP_THEME=${TP_THEME:?err}
+    ## Do Not Change Network for qBittorrent
+    ## qBittorrent MUST always use a VPN / Secure Internet connection
+    network_mode: "service:gluetun"
+
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    restart: always
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      - "8888:8888/tcp" # Gluetun Local Network HTTP proxy
+      - "8388:8388/tcp" # Gluetun Local Network Shadowsocks
+      - "8388:8388/udp" # Gluetun Local Network Shadowsocks
+      - "${WEBUI_PORT_QBITTORRENT:?err}:${WEBUI_PORT_QBITTORRENT:?err}" # WebUI Portal: qBittorrent
+      # - "${QBIT_PORT:?err}:6881" # Transmission Torrent Port
+
+    volumes:
+      - ${FOLDER_FOR_DATA:?err}/gluetun:/gluetun
+    environment:
+      - PUID=${PUID:?err}
+      - PGID=${PGID:?err}
+      - UMASK=${UMASK:?err}
+      - TZ=${TIMEZONE:?err}
+      - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER:?err}
+      - OPENVPN_USER=${VPN_USERNAME:?err}
+      - OPENVPN_PASSWORD=${VPN_PASSWORD:?err}
+      - SERVER_COUNTRIES=${SERVER_COUNTRIES}
+      - SERVER_REGIONS=${SERVER_REGIONS}
+      - SERVER_CITIES=${SERVER_CITIES}
+      - SERVER_HOSTNAMES=${SERVER_HOSTNAMES}
+      - SERVER_CATEGORIES=${SERVER_CATEGORIES}
+      - FIREWALL_OUTBOUND_SUBNETS=${LOCAL_SUBNET:?err}
+      - OPENVPN_CUSTOM_CONFIG=${OPENVPN_CUSTOM_CONFIG}
+      - HTTP_CONTROL_SERVER_ADDRESS=:${GLUETUN_CONTROL_PORT:?err}
+      - VPN_TYPE=${VPN_TYPE}
+      - VPN_ENDPOINT_IP=${VPN_ENDPOINT_IP}
+      - VPN_ENDPOINT_PORT=${VPN_ENDPOINT_PORT}
+      - WIREGUARD_PUBLIC_KEY=${WIREGUARD_PUBLIC_KEY}
+      - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY}
+      - WIREGUARD_PRESHARED_KEY=${WIREGUARD_PRESHARED_KEY}
+      - WIREGUARD_ADDRESSES=${WIREGUARD_ADDRESSES}
+      - HTTPPROXY=on
+      - SHADOWSOCKS=on
+
+    # NOTE: Gluetun VPN container MUST ONLY connect to the mediastack
