@@ -1,9 +1,9 @@
 services:
   traefik:
-    image: traefik:v2.10
+    image: traefik:v3.1.0
     restart: unless-stopped
     init: true
-    env_file: 
+    env_file:
       - ./.env
       - ../.env-cloudflare
     volumes:
@@ -12,52 +12,79 @@ services:
     ports:
       - 80:80
       - 443:443
+      # - 8080:8080
     labels:
       - "traefik.docker.network=default"
       - "traefik.http.routers.traefik.rule=Host(`traefik.home.ohmymndy.com`)"
-      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+      - "traefik.http.routers.traefik.service=api@internal"
       - "traefik.enable=true"
-      - "traefik.http.routers.traefik.middlewares=authentik@docker"
-    extra_hosts: 
+      - "traefik.http.routers.traefik.tls=true"
+      # - "traefik.http.routers.traefik.middlewares=authentik@docker"
+    extra_hosts:
       - host.docker.internal:host-gateway
     networks:
       - default
-
-  authentik-proxy:
-    image: ghcr.io/goauthentik/proxy
-    # ports:
-    #     - 9000:9000
-    #     - 9443:9443
-    environment:
-      AUTHENTIK_HOST: https://auth.home.ohmymndy.com
-      AUTHENTIK_INSECURE: "false"
-      AUTHENTIK_TOKEN: ${AUTHENTIK_TOKEN:?authentik token required}
-      # Starting with 2021.9, you can optionally set this too
-      # when authentik_host for internal communication doesn't match the public URL
-      AUTHENTIK_HOST_BROWSER: https://auth.home.ohmymndy.com
-    labels:
-      traefik.enable: true
-      traefik.port: 9000
-      traefik.http.routers.authentik.rule: HostRegexp(`{subdomain:[a-z]+}.home.ohmymndy.com`) && PathPrefix(`/outpost.goauthentik.io/`)
-
-      # `authentik-proxy` refers to the service name in the compose file.
-      traefik.http.middlewares.authentik.forwardauth.address: http://authentik-proxy:9000/outpost.goauthentik.io/auth/traefik
-      traefik.http.middlewares.authentik.forwardauth.trustForwardHeader: true
-      traefik.http.middlewares.authentik.forwardauth.authResponseHeaders: X-authentik-username,X-authentik-groups,X-authentik-email,X-authentik-name,X-authentik-uid,X-authentik-jwt,X-authentik-meta-jwks,X-authentik-meta-outpost,X-authentik-meta-provider,X-authentik-meta-app,X-authentik-meta-version
-    restart: unless-stopped
-
-  whoami:
-    image: containous/whoami
-    labels:
-        traefik.enable: true
-        traefik.docker.network: default
-
-        traefik.http.routers.whoami.rule: Host(`whoami.home.ohmymndy.com`)
-        traefik.http.routers.whoami.middlewares: authentik@docker
-
-    restart: unless-stopped
+  #
+  # authentik-proxy:
+  #   image: ghcr.io/goauthentik/proxy:${AUTHENTIK_TAG:?No authentik tag provided}
+  #   # ports:
+  #   #     - 9000:9000
+  #   #     - 9443:9443
+  #   environment:
+  #     AUTHENTIK_HOST: https://auth.home.ohmymndy.com
+  #     AUTHENTIK_INSECURE: "true"
+  #     # Token from the Outpost config
+  #     AUTHENTIK_TOKEN: ${AUTHENTIK_TOKEN:?authentik token required}
+  #     # Starting with 2021.9, you can optionally set this too
+  #     # when authentik_host for internal communication doesn't match the public URL
+  #     AUTHENTIK_HOST_BROWSER: https://auth.home.ohmymndy.com
+  #   labels:
+  #     traefik.enable: true
+  #     traefik.docker.network: reverse-proxy
+  #     traefik.http.routers.authentik-proxy.rule: HostRegexp(`{subdomain:[a-z]+}.home.ohmymndy.com`) && PathPrefix(`/outpost.goauthentik.io/`)
+  #     traefik.http.services.authentik-proxy.loadbalancer.server.port: 9000
+  #     # `authentik-proxy` refers to the service name in the compose file.
+  #     traefik.http.middlewares.authentik.forwardauth.address: http://authentik-proxy:9000/outpost.goauthentik.io/auth/traefik
+  #     traefik.http.middlewares.authentik.forwardauth.trustForwardHeader: true
+  #     traefik.http.middlewares.authentik.forwardauth.authResponseHeaders: X-authentik-username,X-authentik-groups,X-authentik-email,X-authentik-name,X-authentik-uid,X-authentik-jwt,X-authentik-meta-jwks,X-authentik-meta-outpost,X-authentik-meta-provider,X-authentik-meta-app,X-authentik-meta-version
+  #   restart: unless-stopped
+  #
+  # authentik-ldap:
+  #   image: ghcr.io/goauthentik/ldap:${AUTHENTIK_TAG:?No authentik tag provided}
+  #   ports:
+  #     - 389:3389
+  #     - 636:6636
+  #   environment:
+  #     AUTHENTIK_HOST: http://authentik-server:9000
+  #     AUTHENTIK_INSECURE: "true"
+  #     AUTHENTIK_DEBUG: "true"
+  #     # Token from the Outpost config
+  #     AUTHENTIK_TOKEN: ${AUTHENTIK_TOKEN:?authentik token required}
+  #     # Starting with 2021.9, you can optionally set this too
+  #     # when authentik_host for internal communication doesn't match the public URL
+  #     AUTHENTIK_HOST_BROWSER: https://auth.home.ohmymndy.com
+  #   # labels:
+  #   #   traefik.enable: true
+  #   #   traefik.docker.network: reverse-proxy
+  #   #   traefik.http.routers.authentik-proxy.rule: HostRegexp(`{subdomain:[a-z]+}.home.ohmymndy.com`) && PathPrefix(`/outpost.goauthentik.io/`)
+  #   #   traefik.http.services.authentik-proxy.loadbalancer.server.port: 9000
+  #   #   # `authentik-proxy` refers to the service name in the compose file.
+  #   #   traefik.http.middlewares.authentik.forwardauth.address: http://authentik-proxy:9000/outpost.goauthentik.io/auth/traefik
+  #   #   traefik.http.middlewares.authentik.forwardauth.trustForwardHeader: true
+  #   #   traefik.http.middlewares.authentik.forwardauth.authResponseHeaders: X-authentik-username,X-authentik-groups,X-authentik-email,X-authentik-name,X-authentik-uid,X-authentik-jwt,X-authentik-meta-jwks,X-authentik-meta-outpost,X-authentik-meta-provider,X-authentik-meta-app,X-authentik-meta-version
+  #   restart: unless-stopped
+  #
+  # whoami:
+  #   image: containous/whoami
+  #   labels:
+  #       traefik.enable: true
+  #       traefik.http.routers.whoami.tls: true
+  #       traefik.docker.network: reverse-proxy
+  #       traefik.http.routers.whoami.rule: Host(`whoami.home.ohmymndy.com`)
+  #       traefik.http.routers.whoami.middlewares: authentik@docker
+  #
+  #   restart: unless-stopped
 
 networks:
   default:
     name: reverse-proxy
-  

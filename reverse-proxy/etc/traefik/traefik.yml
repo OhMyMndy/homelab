@@ -15,7 +15,9 @@ entryPoints:
           - main: "home.ohmymndy.com"
             sans: 
               - "*.home.ohmymndy.com"
-
+          # - main: "home-local.ohmymndy.com"
+          #   sans: 
+          #     - "*.home-local.ohmymndy.com"
 # log:
   # level: DEBUG
 
@@ -48,3 +50,9 @@ certificatesResolvers:
         resolvers:
           - "1.1.1.1:53"
           - "8.8.8.8:53"
+
+# experimental:
+#   plugins:
+#     coraza:
+#       moduleName: github.com/jcchavezs/coraza-http-wasm-traefik
+#       version: v0.2.2
