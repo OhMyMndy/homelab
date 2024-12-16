@@ -1,0 +1,27 @@
+name: audiobookshelf
+services:
+  audiobookshelf:
+    image: ghcr.io/advplyr/audiobookshelf:2.17.5
+    volumes:
+      - ./storage/ebooks:/ebooks
+      - ./storage/audiobooks:/audiobooks
+      - ./storage/podcasts:/podcasts
+      - ./storage/metadata:/metadata
+      - ./storage/config:/config
+    environment:
+      - user=${PUID:?}:${PGID:?}
+    networks:
+      - default
+      - reverse-proxy
+    restart: unless-stopped
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.audiobookshelf.rule=Host(`audiobookshelf.home.ohm\
+        ymndy.com`)"
+      - "traefik.http.routers.audiobookshelf.tls=true"
+      - "traefik.enable=true"
+networks:
+  default:
+  reverse-proxy:
+    name: reverse-proxy
+    external: true
