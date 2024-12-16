@@ -1,0 +1,33 @@
+name: kiwix
+services:
+  downloader:
+    image: downloader:0.1
+    build:
+      dockerfile: ./aria2/Dockerfile
+    volumes:
+      - ./storage:/storage
+      - ./aria2/run.sh:/run.sh
+      - ./aria2/complete.sh:/complete.sh
+      - ./zim-list.txt:/zim-list.txt
+    entrypoint: /run.sh
+    user: "${PUID:?}:${PGID:?}"
+  kiwix:
+    image: ghcr.io/kiwix/kiwix-serve:3.7.0
+    volumes:
+      - ./storage/:/library
+    networks:
+      - default
+      - reverse-proxy
+    command: "/library/*.zim --address 0.0.0.0"
+    restart: unless-stopped
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.kiwix.rule=Host(`kiwix.home.ohmymndy.com`)"
+      - "traefik.http.services.kiwix.loadbalancer.server.port=8080"
+      - "traefik.http.routers.kiwix.tls=true"
+      - "traefik.enable=true"
+networks:
+  default:
+  reverse-proxy:
+    external: true
+    name: reverse-proxy
