@@ -1,34 +1,21 @@
 #!/usr/bin/env bash
-
+set -e
 DIR="$(dirname "$(readlink -f "$0")")/../"
 
 cd "$DIR" || exit
 
 source deploy/functions.sh
 
-(cd reverse-proxy && docker-compose up -d --remove-orphans)
+(source .env-cloudflare && export CF_API_EMAIL CF_API_KEY &&
+    nix run nixpkgs#flarectl -- dns create-or-update --zone ohmymndy.com --name '*.home-tailscale' --content $TAILSCALE_IP --type A) || true
 
-(cd tt-rss && docker-compose up -d --remove-orphans)
+(source .env-cloudflare && export CF_API_EMAIL CF_API_KEY &&
+    nix run nixpkgs#flarectl -- dns create-or-update --zone ohmymndy.com --name '*.home' --content $LOCAL_IP --type A) || true
 
-(cd vaultwarden && docker-compose up -d --remove-orphans)
+start reverse-proxy adguard smtprelay status vaultwarden dashy homepage wallabag \
+    redmine tt-rss humblebundle-downloader searxng \
+    kiwix pokeblahaj \
+    litellm openwebui
 
-# (cd minecraft-bedrock-server && docker-compose up -d)
-
-(cd firefly && docker-compose up -d --remove-orphans)
-
-(cd dashy && docker-compose up -d --remove-orphans) 
-
-(cd adguard && docker-compose up -d --remove-orphans)
-
-(cd kestra && docker-compose up -d --remove-orphans)
-
-(cd portainer && docker-compose up -d --remove-orphans)
-
-
-( cd authentik;
-if [[ ! -f .env ]]; then
-    echo "PG_PASS=$(openssl rand -base64 36)" >> .env;
-    echo "AUTHENTIK_SECRET_KEY=$(openssl rand -base64 36)" >> .env;
-fi;
-docker-compose up -d --remove-orphans
-)
+(source .env-cloudflare && export CF_API_EMAIL CF_API_KEY &&
+    nix run nixpkgs#flarectl -- dns list --zone ohmymndy.com)
