@@ -1,29 +1,29 @@
-version: "3.8"
+name: dashy
 services:
   app:
-    image: lissy93/dashy
+    image: lissy93/dashy:release-3.1.1
     volumes:
-      - ./public:/app/public
+      - ./storage/user-data:/app/user-data/
     environment:
       - NODE_ENV=production
       - UID=${UID:-1000}
       - GID=${GID:-1000}
+    networks:
+      - default
+      - reverse-proxy
     restart: unless-stopped
     healthcheck:
-      test: ['CMD', 'node', '/app/services/healthcheck']
+      test: [ "CMD", "node", "/app/services/healthcheck" ]
       interval: 1m30s
       timeout: 10s
       retries: 3
       start_period: 40s
-    init: true
-    networks:
-      - default
-      - reverse-proxy
     labels:
       - "traefik.docker.network=reverse-proxy"
       - "traefik.http.routers.dashy.rule=Host(`dashy.home.ohmymndy.com`)"
       - "traefik.http.routers.dashy.tls=true"
       - "traefik.enable=true"
+    init: true
 
 networks:
   default:
