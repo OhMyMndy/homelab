@@ -1,0 +1,31 @@
+[project]
+name = "openapi"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Mandy Schoep", email = "2277717+OhMyMndy@users.noreply.github.com" },
+]
+
+requires-python = ">=3.10"
+dependencies = ["bitwarden-sdk>=1.0.0", "tailscale-openapi"]
+
+[tool.uv.sources]
+tailscale-openapi = { path = "tailscale_openapi" }
+
+[tool.basedpyright]
+pythonVersion = "3.10"
+include = ["src"]
+extraPaths = ["tailscale_openapi"]
+venvPath = "."
+venv = ".venv"
+executionEnvironments = [{ root = "src" }]
+
+
+[project.scripts]
+tailscale_dns = "scripts:tailscale_dns"
+tailscale_fallback_dns = "scripts:tailscale_fallback_dns"
+
+# [build-system]
+# requires = ["hatchling"]
+# build-backend = "hatchling.build"
