@@ -1,0 +1,26 @@
+# SignatureAlgorithmEnum
+
+
+## Enum
+
+* `HTTP_COLON_SLASH_SLASH_WWW_DOT_W3_DOT_ORG_SLASH_2000_SLASH_09_SLASH_XMLDSIG_HASH_RSA_MINUS_SHA1` (value: `'http://www.w3.org/2000/09/xmldsig#rsa-sha1'`)
+
+* `HTTP_COLON_SLASH_SLASH_WWW_DOT_W3_DOT_ORG_SLASH_2001_SLASH_04_SLASH_XMLDSIG_MINUS_MORE_HASH_RSA_MINUS_SHA256` (value: `'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'`)
+
+* `HTTP_COLON_SLASH_SLASH_WWW_DOT_W3_DOT_ORG_SLASH_2001_SLASH_04_SLASH_XMLDSIG_MINUS_MORE_HASH_RSA_MINUS_SHA384` (value: `'http://www.w3.org/2001/04/xmldsig-more#rsa-sha384'`)
+
+* `HTTP_COLON_SLASH_SLASH_WWW_DOT_W3_DOT_ORG_SLASH_2001_SLASH_04_SLASH_XMLDSIG_MINUS_MORE_HASH_RSA_MINUS_SHA512` (value: `'http://www.w3.org/2001/04/xmldsig-more#rsa-sha512'`)
+
+* `HTTP_COLON_SLASH_SLASH_WWW_DOT_W3_DOT_ORG_SLASH_2001_SLASH_04_SLASH_XMLDSIG_MINUS_MORE_HASH_ECDSA_MINUS_SHA1` (value: `'http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha1'`)
+
+* `HTTP_COLON_SLASH_SLASH_WWW_DOT_W3_DOT_ORG_SLASH_2001_SLASH_04_SLASH_XMLDSIG_MINUS_MORE_HASH_ECDSA_MINUS_SHA256` (value: `'http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha256'`)
+
+* `HTTP_COLON_SLASH_SLASH_WWW_DOT_W3_DOT_ORG_SLASH_2001_SLASH_04_SLASH_XMLDSIG_MINUS_MORE_HASH_ECDSA_MINUS_SHA384` (value: `'http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha384'`)
+
+* `HTTP_COLON_SLASH_SLASH_WWW_DOT_W3_DOT_ORG_SLASH_2001_SLASH_04_SLASH_XMLDSIG_MINUS_MORE_HASH_ECDSA_MINUS_SHA512` (value: `'http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512'`)
+
+* `HTTP_COLON_SLASH_SLASH_WWW_DOT_W3_DOT_ORG_SLASH_2000_SLASH_09_SLASH_XMLDSIG_HASH_DSA_MINUS_SHA1` (value: `'http://www.w3.org/2000/09/xmldsig#dsa-sha1'`)
+
+[[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
+
+

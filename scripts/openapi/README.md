@@ -11,5 +11,10 @@ uv add "github_openapi@github_openapi"
 
 openapi-generator-cli generate -i https://docs.gitea.com/redocusaurus/plugin-redoc-1.yaml -g python -o gitea_openapi --package-name gitea_openapi
 uv add "gitea_openapi@gitea_openapi"
+
+openapi-generator-cli generate -i https://auth.home.ohmymndy.com/api/v3/schema/ -g python -o authentik_openapi --package-name authentik_openapi
+uv add "authentik_openapi@authentik_openapi"
+
+
 echo $'\n[tool.pyright]\nvenvPath = "."\nvenv = ".venv"\n' >> pyproject.toml
 ```
