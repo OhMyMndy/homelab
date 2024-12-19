@@ -8,5 +8,8 @@ uv add "tailscale-openapi@tailscale-openapi"
 openapi-generator-cli generate -i https://raw.githubusercontent.com/github/rest-api-description/refs/heads/main/descriptions/api.github.com/api.github.com.yaml -g python -o github_openapi --package-name github_openapi
 uv add "github_openapi@github_openapi"
 
+
+openapi-generator-cli generate -i https://docs.gitea.com/redocusaurus/plugin-redoc-1.yaml -g python -o gitea_openapi --package-name gitea_openapi
+uv add "gitea_openapi@gitea_openapi"
 echo $'\n[tool.pyright]\nvenvPath = "."\nvenv = ".venv"\n' >> pyproject.toml
 ```
