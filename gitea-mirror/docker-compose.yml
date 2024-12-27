@@ -1,0 +1,74 @@
+name: gitea-mirror
+services:
+  gitea:
+    image: docker.io/gitea/gitea:1.22.6
+    depends_on:
+      - postgres
+    volumes:
+      - ./storage/gitea:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - USER_UID=${PUID:?}
+      - USER_GID=${PGID:?}
+      - GITEA__database__DB_TYPE=postgres
+      - GITEA__database__HOST=postgres:5432
+      - GITEA__database__NAME=${POSTGRES_DB:?}
+      - GITEA__database__USER=${POSTGRES_USER:?}
+      - GITEA__database__PASSWD=${POSTGRES_PASSWORD:?}
+      - GITEA__security__SECRET_KEY=${GITEA_SECRET_KEY:?}
+      - GITEA__security__INTERNAL_TOKEN=${GITEA_INTERNAL_TOKEN:?}
+      - GITEA____APP_NAME=OhMyMndy's Universal Git Mirror
+      - GITEA__server__DOMAIN=gitea-mirror.home.ohmymndy.com
+      - GITEA__server__SSH_DOMAIN=gitea-mirror.home.ohmymndy.com
+      - GITEA__server__SSH_PORT=2222
+      - GITEA__server__ROOT_URL=https://gitea-mirror.home.ohmymndy.com/
+      - GITEA__server__OFFLINE_MODE=true
+      - GITEA__server__ENABLE_GZIP=true
+      - GITEA__security__INSTALL_LOCK=true
+      # - GITEA__mailer__ENABLED=true
+      # - GITEA__mailer__FROM=${GITEA__mailer__FROM:?GITEA__mailer__FROM not set}
+      # - GITEA__mailer__PROTOCOL=smtps
+      # - GITEA__mailer__SMTP_ADDR=${GITEA__mailer__SMTP_ADDR:?GITEA__mailer__SMTP_ADDR not set}
+      # - GITEA__mailer__SMTP_PORT=${GITEA__mailer__SMTP_PORT:?GITEA__mailer__SMTP_PORT not set}
+      # - GITEA__mailer__USER=${GITEA__mailer__USER:-apikey}
+      # - GITEA__mailer__PASSWD="""${GITEA__mailer__PASSWD:?GITEA__mailer__PASSWD not set}"""
+    ports:
+      - "2222:2222"
+    networks:
+      - default
+      - reverse-proxy
+      - lldap
+    restart: unless-stopped
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.gitea-mirror.rule=Host(`gitea-mirror.home.ohmymnd\
+        y.com`)"
+      - "traefik.http.services.gitea-mirror.loadbalancer.server.port=3000"
+      - "traefik.http.routers.gitea-mirror.tls=true"
+      - "traefik.enable=true"
+  # gitea-config:
+  #   image: docker.io/gitea/gitea:1.22.6
+  #   entrypoint: bash
+  #   command:
+  #     - gitea admin auth
+  #     - gitea admin auth add-ldap --name LLDAP --security-protocol Unencrypted --host lldap --port 3890 --bind-dn "uid=admin,ou=people,dc=ohmymndy,dc=com" --bind-password "$LLDAP_LDAP_USER_PASS" --user-search-base "ou=people,dc=ohmymndy,dc=com" --user-filter "(&(objectClass=person)(|(uid=%[1]s)(mail=%[1]s)))" --admin-filter "(memberof=cn=lldap_admin,ou=groups,dc=example,dc=com)" --username-attribute uid --firstname-attribute givenName --surname-attribute sn --email-attribute mail --avatar-attribute jpegPhoto --synchronize-users
+  postgres:
+    image: postgres:16
+    volumes:
+      - ./storage/db/postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?}
+      POSTGRES_DB: ${POSTGRES_DB:?}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+    command: postgres -c wal_level=logical
+    restart: unless-stopped
+
+networks:
+  default:
+  reverse-proxy:
+    name: reverse-proxy
+    external: true
+  lldap:
+    name: lldap_default
+    external: true
