@@ -1,7 +1,70 @@
 name: lldap
+x-lldap: &lldap
+  image: lldap/lldap:2024-12-24
+  volumes:
+    - "./storage/lldap:/data"
+    - ./bootstrap:/bootstrap:ro
+  environment:
+    - UID=${PUID:?}
+    - GID=${PGID:?}
+    - TZ=${TIMEZONE:?}
+    - LLDAP_JWT_SECRET=${LLDAP_JWT_SECRET:?}
+    - LLDAP_KEY_SEED=${LLDAP_KEY_SEED:?}
+    - LLDAP_LDAP_BASE_DN=dc=ohmymndy,dc=com
+    - LLDAP_LDAP_USER_PASS=${LLDAP_LDAP_USER_PASS:?}
+    # If using LDAPS, set enabled true and configure cert and key path
+    # - LLDAP_LDAPS_OPTIONS__ENABLED=true
+    # - LLDAP_LDAPS_OPTIONS__CERT_FILE=/path/to/certfile.crt
+    # - LLDAP_LDAPS_OPTIONS__KEY_FILE=/path/to/keyfile.key
+    # You can also set a different database:
+    # - LLDAP_DATABASE_URL=mysql://mysql-user:password@mysql-server/my-database
+    # - LLDAP_DATABASE_URL=postgres://postgres-user:password@postgres-server/my-database
+    # If using SMTP, set the following variables
+    # - LLDAP_SMTP_OPTIONS__ENABLE_PASSWORD_RESET=true
+    # - LLDAP_SMTP_OPTIONS__SERVER=smtp.example.com
+    # - LLDAP_SMTP_OPTIONS__PORT=465 # Check your smtp providor's documentation for this setting
+    # - LLDAP_SMTP_OPTIONS__SMTP_ENCRYPTION=TLS # How the connection is encrypted, either "NONE" (no encryption, port 25), "TLS" (sometimes called SSL, port 465) or "STARTTLS" (sometimes called TLS, port 587).
+    # - LLDAP_SMTP_OPTIONS__USER=no-reply@example.com # The SMTP user, usually your email address
+    # - LLDAP_SMTP_OPTIONS__PASSWORD=PasswordGoesHere # The SMTP password
+    # - LLDAP_SMTP_OPTIONS__FROM=no-reply <no-reply@example.com> # The header field, optional: how the sender appears in the email. The first is a free-form name, followed by an email between <>.
+    # - LLDAP_SMTP_OPTIONS__TO=admin <admin@example.com> # Same for reply-to, optional.
+    - USER_CONFIGS_DIR=/bootstrap/user-configs
+    - GROUP_CONFIGS_DIR=/bootstrap/group-configs
+    # - USER_SCHEMAS_DIR=/bootstrap/user-schemas
+    # - GROUP_SCHEMAS_DIR=/bootstrap/group-schemas
 services:
+  render-templates:
+    build:
+      dockerfile: ./dockerfiles/render-templates/Dockerfile
+    image: ohmymndy/render-templates
+    volumes:
+      - ./:/lldap
+      - ../deploy:/deploy:ro
+    working_dir: /lldap
+    command:
+      - -c
+      - |
+        source /deploy/functions.sh
+
+        set -e
+
+        ADMIN_PASSWORD="$(random_password)"
+        ADMIN_EMAIL="admin@email.com"
+
+        export ADMIN_PASSWORD
+        export ADMIN_EMAIL
+
+        add_to_env ADMIN_PASSWORD "$$ADMIN_PASSWORD"
+        add_to_env ADMIN_EMAIL "$$ADMIN_EMAIL"
+
+        echo "Rendering template:"
+
+        if [[ ! -f bootstrap/user-configs/admin.json ]]; then
+          envsubst < bootstrap/user-configs/admin.json.templ > bootstrap/user-configs/admin.json
+        fi
+    user: ${PUID:?}:${PGID:?}
   lldap:
-    image: lldap/lldap:2024-12-24
+    <<: *lldap
     ports:
       # For LDAP, not recommended to expose, see Usage section.
       # - "3890:3890"
@@ -9,32 +72,6 @@ services:
       - "6360:6360"
       # For the web front-end
       # - "17170:17170"
-    volumes:
-      - "./storage/lldap:/data"
-    environment:
-      - UID=${PUID:?}
-      - GID=${PGID:?}
-      - TZ=${TIMEZONE:?}
-      - LLDAP_JWT_SECRET=${LLDAP_JWT_SECRET:?}
-      - LLDAP_KEY_SEED=${LLDAP_KEY_SEED:?}
-      - LLDAP_LDAP_BASE_DN=dc=ohmymndy,dc=com
-      - LLDAP_LDAP_USER_PASS=${LLDAP_LDAP_USER_PASS:?}
-      # If using LDAPS, set enabled true and configure cert and key path
-      # - LLDAP_LDAPS_OPTIONS__ENABLED=true
-      # - LLDAP_LDAPS_OPTIONS__CERT_FILE=/path/to/certfile.crt
-      # - LLDAP_LDAPS_OPTIONS__KEY_FILE=/path/to/keyfile.key
-      # You can also set a different database:
-      # - LLDAP_DATABASE_URL=mysql://mysql-user:password@mysql-server/my-database
-      # - LLDAP_DATABASE_URL=postgres://postgres-user:password@postgres-server/my-database
-      # If using SMTP, set the following variables
-      # - LLDAP_SMTP_OPTIONS__ENABLE_PASSWORD_RESET=true
-      # - LLDAP_SMTP_OPTIONS__SERVER=smtp.example.com
-      # - LLDAP_SMTP_OPTIONS__PORT=465 # Check your smtp providor's documentation for this setting
-      # - LLDAP_SMTP_OPTIONS__SMTP_ENCRYPTION=TLS # How the connection is encrypted, either "NONE" (no encryption, port 25), "TLS" (sometimes called SSL, port 465) or "STARTTLS" (sometimes called TLS, port 587).
-      # - LLDAP_SMTP_OPTIONS__USER=no-reply@example.com # The SMTP user, usually your email address
-      # - LLDAP_SMTP_OPTIONS__PASSWORD=PasswordGoesHere # The SMTP password
-      # - LLDAP_SMTP_OPTIONS__FROM=no-reply <no-reply@example.com> # The header field, optional: how the sender appears in the email. The first is a free-form name, followed by an email between <>.
-      # - LLDAP_SMTP_OPTIONS__TO=admin <admin@example.com> # Same for reply-to, optional.
     networks:
       - default
       - reverse-proxy
@@ -45,6 +82,35 @@ services:
       - "traefik.http.services.lldap.loadbalancer.server.port=17170"
       - "traefik.http.routers.lldap.tls=true"
       - "traefik.enable=true"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://127.0.0.1:17170",
+        ]
+      interval: 30s
+      timeout: 3s
+
+  lldap-init:
+    <<: *lldap
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        bash -x /app/bootstrap.sh
+    environment:
+      - LLDAP_URL=http://lldap:17170
+      - LLDAP_ADMIN_PASSWORD=${LLDAP_LDAP_USER_PASS:?}
+    depends_on:
+      lldap:
+        condition: service_healthy
+      render-templates:
+        condition: service_completed_successfully
+
 networks:
   default:
   reverse-proxy:
