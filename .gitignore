@@ -11,3 +11,7 @@ docker-compose.override.yml
 !.keep
 backups
 *.tar.gz
+
+__pycache__
+.terraform
+*.tfvars
