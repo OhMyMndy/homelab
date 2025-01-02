@@ -39,7 +39,7 @@ class Pipeline:
         self.valves = self.Valves(
             **{
                 "pipelines": ["*"],  # Connect to all pipelines
-                "priority": 0
+                "priority": 0,
             }
         )
 
@@ -48,12 +48,10 @@ class Pipeline:
 
     async def on_startup(self):
         # This function is called when the server is started.
-        print(f"on_startup:{__name__}")
         pass
 
     async def on_shutdown(self):
         # This function is called when the server is stopped.
-        print(f"on_shutdown:{__name__}")
         pass
 
     async def on_valves_updated(self):
@@ -61,9 +59,7 @@ class Pipeline:
         pass
 
     async def inlet(self, body: dict, user: Optional[dict] = None) -> dict:
-        print(f"inlet:{__name__}")
-
         if user and not body.get("user"):
-            body["user"] = user['email']
+            body["user"] = user["email"]
 
         return body

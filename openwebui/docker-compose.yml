@@ -1,7 +1,7 @@
 name: openwebui
 services:
-  open-webui:
-    image: ghcr.io/open-webui/open-webui:0.4.8
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:0.5.3
     volumes:
       - ./storage/open-webui:/app/backend/data
     env_file:
@@ -9,6 +9,7 @@ services:
     networks:
       - default
       - reverse-proxy
+      - lldap
     extra_hosts:
       - host.docker.internal:host-gateway
     restart: unless-stopped
@@ -17,6 +18,13 @@ services:
       - "traefik.http.routers.openwebui.rule=Host(`openwebui.home.ohmymndy.com`)"
       - "traefik.http.routers.openwebui.tls=true"
       - "traefik.enable=true"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-s", "http://127.0.0.1:8080"]
+      interval: 15s
+      timeout: 2s
+      retries: 3
+      start_period: 40s
+      start_interval: 5s
   pipelines:
     image: ghcr.io/open-webui/pipelines:git-1367d95
     volumes:
@@ -33,9 +41,19 @@ services:
         s.home.ohmymndy.com`)"
       - "traefik.http.routers.openwebui-pipelines.tls=true"
       - "traefik.enable=true"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-s", "http://127.0.0.1:9099"]
+      interval: 15s
+      timeout: 2s
+      retries: 3
+      start_period: 40s
+      start_interval: 5s
 
 networks:
   default:
   reverse-proxy:
     name: reverse-proxy
+    external: true
+  lldap:
+    name: lldap_default
     external: true
