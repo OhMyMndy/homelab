@@ -5,27 +5,27 @@ services:
     volumes:
       - ./storage/postgres:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: litellm
-      POSTGRES_DB: litellm
+      POSTGRES_USER: ${POSTGRES_USER:?}
+      POSTGRES_DB: ${POSTGRES_DB:?}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
-    env_file:
-      - .env
     command: postgres -c wal_level=logical
-    restart: always
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d litellm -U litellm"]
+      test:
+        ["CMD-SHELL", "pg_isready -d ${POSTGRES_DB:?} -U ${POSTGRES_USER:?}"]
       interval: 1s
       timeout: 5s
       retries: 10
   litellm:
-    image: ghcr.io/berriai/litellm:main-v1.53.1
+    image: litellm/litellm:v1.56.6
     volumes:
       - ./litellm-config.yaml:/app/config.yaml
     environment:
-      DATABASE_URL: "postgresql://litellm:${POSTGRES_PASSWORD:?}@db:5432/litellm"
-      STORE_MODEL_IN_DB: "True" # allows adding models to proxy via UI
-    env_file:
-      - .env
+      DATABASE_URL: "postgresql://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@db:5432/${POSTGRES_DB:?}"
+      STORE_MODEL_IN_DB: "False" # allows adding models to proxy via UI
+      LITELLM_MASTER_KEY: "${LITELLM_MASTER_KEY:?}"
+      LITELLM_SALT_KEY: "${LITELLM_SALT_KEY:?}"
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:?}"
     networks:
       - default
       - reverse-proxy
@@ -37,11 +37,55 @@ services:
       - "traefik.http.routers.litellm.rule=Host(`litellm.home.ohmymndy.com`)"
       - "traefik.http.routers.litellm.tls=true"
       - "traefik.enable=true"
-    develop:
-      watch:
-        - action: sync+restart
-          path: ./litellm-config.yaml
-          target: /app/config.yaml
+    # develop:
+    #   watch:
+    #     - action: sync+restart
+    #       path: ./litellm-config.yaml
+    #       target: /app/config.yaml
+    healthcheck:
+      test:
+        ["CMD-SHELL", "bash", "-c", "cat < /dev/null > /dev/tcp/127.0.0.1/4000"]
+      interval: 1m
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+      start_interval: 5s
+
+  litellm-configure:
+    image: ohmymndy/alpine
+    restart: no
+    volumes:
+      - ../:/start
+    working_dir: /start
+    command:
+      - -c
+      - |
+        ./litellm/configure.sh
+    user: ${PUID:?}:${PGID:?}
+    depends_on:
+      litellm:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    volumes:
+      - ./storage/prometheus:/prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    # ports:
+    # - "9090:9090"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9090"]
+      interval: 1m
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+      start_interval: 5s
+
 networks:
   default:
   reverse-proxy:

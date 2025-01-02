@@ -1,7 +1,9 @@
+general_settings:
+  disable_master_key_return: true
 model_list:
   # TODO: https://openrouter.ai/models
   # Paid models
-  - model_name: "mistral-large-2411"
+  - model_name: "mistralai/mistral-large-2411"
     litellm_params:
       model: "openrouter/mistralai/mistral-large-2411"
       api_key: os.environ/OPENROUTER_API_KEY
@@ -13,21 +15,20 @@ model_list:
       api_key: os.environ/OPENROUTER_API_KEY
       tags: ["paid"]
 
-  # Free models
-  - model_name: "google/gemini-exp-1121:free"
+  - model_name: "google/palm-2-codechat-bison"
     litellm_params:
-      model: "openrouter/google/gemini-exp-1121:free"
+      model: "openrouter/google/palm-2-codechat-bison"
       api_key: os.environ/OPENROUTER_API_KEY
-      model_info:
-        mode: embedding
-      tags: ["free"]
-  - model_name: "meta-llama/llama-3.1-70b-instruct:free"
+      tags: ["paid"]
+
+  - model_name: "meta-llama/llama-3.1-8b-instruct"
     litellm_params:
-      model: "openrouter/meta-llama/llama-3.1-70b-instruct:free"
+      model: "openrouter/meta-llama/llama-3.1-8b-instruct"
       api_key: os.environ/OPENROUTER_API_KEY
-      tags: ["free"]
+      tags: ["paid"]
+
   - model_name: "openai/o1-mini-2024-09-12"
     litellm_params:
       model: "openrouter/openai/o1-mini-2024-09-12"
       api_key: os.environ/OPENROUTER_API_KEY
-      tags: ["free"]
+      tags: ["paid"]
