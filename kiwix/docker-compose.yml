@@ -2,6 +2,7 @@ name: kiwix
 services:
   downloader:
     image: downloader:0.1
+    restart: unless-stopped
     build:
       dockerfile: ./aria2/Dockerfile
     volumes:
