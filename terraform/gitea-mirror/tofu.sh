@@ -18,10 +18,13 @@ source ../../lldap/.env
 
 export GITEA_PASSWORD=${ADMIN_PASSWORD}
 
-# TODO: get github token from bw
+# stop if cannot unlock
+bw unlock --check
+GITHUB_TOKEN="$(bw get item 37e47220-bbc7-48bb-b39d-2679fb9c3cce |
+  jq '.fields[] | select(.name =="public-repositories pat") | .value' -r)"
 
 if [[ "$GITHUB_TOKEN" != '' ]]; then
-  echo "github_token = \"$GITHUB_TOKEN\"" >>terraform.tfvars
+  add_tfvars_force github_token "$GITHUB_TOKEN" terraform.tfvars
 fi
 
 exec tofu "$@"
