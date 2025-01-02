@@ -1,0 +1,21 @@
+{
+  "rules": {
+    "no-duplicate-container-names": 2,
+    "no-duplicate-exported-ports": 2,
+    "no-quotes-in-volumes": 2,
+    "no-unbound-port-interfaces": 1,
+    "no-version-field": 2,
+    "no-build-and-image": 0,
+    "require-project-name-field": 1,
+    "require-quotes-in-ports": 2,
+    "service-container-name-regex": 2,
+    "service-image-require-explicit-tag": 2,
+    "service-keys-order": 2,
+    "services-alphabetical-order": 2,
+    "top-level-properties-order": 2
+  },
+  "quiet": false,
+  "debug": true,
+  "exclude": [
+  ]
+}
