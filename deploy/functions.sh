@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
 
+FUNCTIONS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [[ -f "$FUNCTIONS_DIR/../.bw-login" ]]; then
+  BW_SESSION="$(cat "$FUNCTIONS_DIR/../.bw-login")"
+  export BW_SESSION
+fi
+
 export TAILSCALE_IP
 export LOCAL_IP
 
-TAILSCALE_IP="$(ip -f inet addr show tailscale0 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p')"
-LOCAL_IP="$(ip addr show ens18 | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' -m 1 | head -1)"
+TAILSCALE_IP="$(ip -f inet addr show tailscale0 2>/dev/null | sed -En -e 's/.*inet ([0-9.]+).*/\1/p')"
+LOCAL_IP="$(ip addr show ens18 2>/dev/null | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' -m 1 | head -1)"
 
 export PUID
 export PGID
@@ -15,17 +22,17 @@ PUID="$(id -u)"
 PGID="$(id -g)"
 TIMEZONE=Europe/Brussels
 
-if ! command -v jq &>/dev/null; then
-  echo "jq not found..." 1>&2
-fi
-
-if ! command -v yq &>/dev/null; then
-  echo "yq not found..." 1>&2
-fi
-
-if ! command -v openssl &>/dev/null; then
-  echo "openssl not found..." 1>&2
-fi
+# if ! command -v jq &>/dev/null; then
+#   echo "jq not found..." 1>&2
+# fi
+#
+# if ! command -v yq &>/dev/null; then
+#   echo "yq not found..." 1>&2
+# fi
+#
+# if ! command -v openssl &>/dev/null; then
+#   echo "openssl not found..." 1>&2
+# fi
 
 function start() {
   local stacks="$*"
@@ -33,13 +40,36 @@ function start() {
   for stack in $stacks; do
     echo "Deploying stack: $stack"
 
-    (cd "$stack" && docker compose up -d --remove-orphans --build)
+    (
+      cd "$stack" &&
+        if [[ -f ./setup.sh ]]; then ./setup.sh; fi &&
+        docker compose up -d --remove-orphans --build
+    )
   done
+}
+
+function add_to_env_force() {
+  local key="$1"
+  local value="$2"
+  touch .env
+  sed -E -i "/^${key}=/d" .env
+  echo "${key}=${value}" >>.env
+}
+
+function add_tfvars_force() {
+  local key="$1"
+  local value="$2"
+  local file="$3"
+  touch "$file"
+  sed -E -i "/^${key}\s*=/d" "$file"
+  # TODO: escape $value
+  echo "${key} = \"${value}\"" >>"$file"
 }
 
 function add_to_env() {
   local key="$1"
   local value="$2"
+  touch .env
   if ! grep -q "${key}=" .env; then
     echo "${key}=${value}" >>.env
   fi
@@ -50,5 +80,6 @@ function random_password() {
 }
 
 function create_host_dirs() {
-  docker compose config | yq '.services[].volumes[].source' | grep "^$PWD" | tr '\n' '\0' | xargs -0 -r -I{} bash -c "mkdir -p {}"
+  docker compose config | yq '.services[].volumes[].source' | grep "^$PWD" | tr '\n' '\0' |
+    xargs -0 -r -I{} bash -c "source=\"{}\"; if [[ ! \"\$source\" == *.* ]]; then mkdir -p \"\$source\"; fi"
 }

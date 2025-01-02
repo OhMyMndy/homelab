@@ -10,10 +10,8 @@ source deploy/functions.sh
 # ./deploy/stop.sh
 sudo systemctl stop docker.socket docker.service
 
-
 # date command to get d-m-y H:i:s
 date=$(date +"%d-%m-%Y-%H:%M:%S")
-
 
 mkdir -p backups
 
@@ -23,10 +21,12 @@ sudo tar --exclude='deploy' \
   --exclude='kiwix/storage' \
   --exclude='adguard/storage/work/data/querylog.json' \
   --exclude='streamrip/storage/Downloads' \
+  --exclude='netbootxyz/assets' \
+  --exclude='n8n/storage/ollama/models' \
+  --exclude='plex/storage' \
   --exclude='backups' \
   -czf "backups/backup-homelab-${date}.tar.gz" .
 
 sudo chown "$(id -u):$(id -g)" "backups/backup-homelab-${date}.tar.gz"
-
 
 sudo systemctl start docker.service

@@ -1,6 +1,7 @@
 name: lldap
 x-lldap: &lldap
   image: lldap/lldap:2024-12-24
+  restart: unless-stopped
   volumes:
     - "./storage/lldap:/data"
     - ./bootstrap:/bootstrap:ro
@@ -34,9 +35,8 @@ x-lldap: &lldap
     # - GROUP_SCHEMAS_DIR=/bootstrap/group-schemas
 services:
   render-templates:
-    build:
-      dockerfile: ./dockerfiles/render-templates/Dockerfile
-    image: ohmymndy/render-templates
+    image: ohmymndy/alpine
+    restart: no
     volumes:
       - ./:/lldap
       - ../deploy:/deploy:ro
@@ -48,18 +48,17 @@ services:
 
         set -e
 
-        ADMIN_PASSWORD="$(random_password)"
-        ADMIN_EMAIL="admin@email.com"
-
-        export ADMIN_PASSWORD
-        export ADMIN_EMAIL
-
-        add_to_env ADMIN_PASSWORD "$$ADMIN_PASSWORD"
-        add_to_env ADMIN_EMAIL "$$ADMIN_EMAIL"
-
-        echo "Rendering template:"
-
         if [[ ! -f bootstrap/user-configs/admin.json ]]; then
+          ADMIN_PASSWORD="$(random_password)"
+          ADMIN_EMAIL="admin@email.com"
+
+          export ADMIN_PASSWORD
+          export ADMIN_EMAIL
+
+          add_to_env ADMIN_PASSWORD "$$ADMIN_PASSWORD"
+          add_to_env ADMIN_EMAIL "$$ADMIN_EMAIL"
+
+          echo "Rendering template:"
           envsubst < bootstrap/user-configs/admin.json.templ > bootstrap/user-configs/admin.json
         fi
     user: ${PUID:?}:${PGID:?}

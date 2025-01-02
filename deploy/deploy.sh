@@ -12,6 +12,7 @@ source deploy/functions.sh
 (source .env-cloudflare && export CF_API_EMAIL CF_API_KEY &&
     nix run nixpkgs#flarectl -- dns create-or-update --zone ohmymndy.com --name '*.home' --content $LOCAL_IP --type A) || true
 
+(cd helpers && docker compose build)
 start reverse-proxy lldap adguard smtprelay status vaultwarden authentik dashy homepage wallabag \
     redmine tt-rss humblebundle-downloader searxng \
     gitea-mirror \

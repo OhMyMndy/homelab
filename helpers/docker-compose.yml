@@ -1,0 +1,9 @@
+name: helpers
+
+services:
+  alpine:
+    build:
+      dockerfile: ./alpine/Dockerfile
+    image: ohmymndy/alpine
+    restart: no
+    user: ${PUID:?}:${PGID:?}
