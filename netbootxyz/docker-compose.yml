@@ -2,6 +2,7 @@ name: netbootxyz
 services:
   init:
     image: alpine:3.21.0
+    restart: unless-stopped
     volumes:
       - ./storage/config:/config
     command:
@@ -32,7 +33,7 @@ services:
       - NGINX_PORT=80 #optional
       - WEB_APP_PORT=3000 #optional
     ports:
-      - '0.0.0.0:69:69/udp'
-      - '0.0.0.0:3000:3000'
-      - '0.0.0.0:8089:80' #optional
+      - "0.0.0.0:69:69/udp"
+      - "0.0.0.0:3000:3000"
+      - "0.0.0.0:8089:80" #optional
     restart: unless-stopped
