@@ -2,10 +2,11 @@ name: drill
 services:
   drill:
     image: docker.io/apache/drill:1.21.2-openjdk-17
+    restart: unless-stopped
     volumes:
       - ./storage-plugins-override.conf:/opt/drill/conf/storage-plugins-override.conf
     ports:
-      - '8047:8047'
-      - '31010:31010'
+      - "8047:8047"
+      - "31010:31010"
     stdin_open: true
     tty: true
