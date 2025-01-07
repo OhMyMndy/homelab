@@ -16,3 +16,4 @@ __pycache__
 .terraform
 *.tfvars
 .bw-token
+*-bak
