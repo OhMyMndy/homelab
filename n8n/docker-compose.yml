@@ -1,5 +1,6 @@
 x-n8n: &service-n8n
   image: n8nio/n8n:latest
+  restart: unless-stopped
   # networks: ["demo"]
   environment:
     - DB_TYPE=postgresdb
@@ -15,9 +16,9 @@ x-n8n: &service-n8n
 
 x-ollama: &service-ollama
   image: ollama/ollama:latest
+  restart: unless-stopped
   container_name: ollama
   # networks: ["demo"]
-  restart: unless-stopped
   ports:
     - 11434:11434
   volumes:
@@ -25,6 +26,7 @@ x-ollama: &service-ollama
 
 x-init-ollama: &init-ollama
   image: ollama/ollama:latest
+  restart: unless-stopped
   # networks: ["demo"]
   container_name: ollama-pull-llama
   volumes:
@@ -39,6 +41,7 @@ services:
     image: postgres:16-alpine
     # networks: ["demo"]
     restart: unless-stopped
+    container_name: n8n-postgresql
     environment:
       - POSTGRES_USER
       - POSTGRES_PASSWORD
@@ -55,18 +58,18 @@ services:
       timeout: 5s
       retries: 10
 
-  n8n-import:
-    <<: *service-n8n
-    container_name: n8n-import
-    entrypoint: /bin/sh
-    command:
-      - "-c"
-      - "n8n import:credentials --separate --input=/backup/credentials && n8n import:workflow --separate --input=/backup/workflows"
-    volumes:
-      - ./n8n/backup:/backup
-    depends_on:
-      postgres:
-        condition: service_healthy
+  # n8n-import:
+  #   <<: *service-n8n
+  #   container_name: n8n-import
+  #   entrypoint: /bin/sh
+  #   command:
+  #     - "-c"
+  #     - "n8n import:credentials --separate --input=/backup/credentials && n8n import:workflow --separate --input=/backup/workflows"
+  #   volumes:
+  #     - ./n8n/backup:/backup
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
 
   n8n:
     <<: *service-n8n
@@ -91,12 +94,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      n8n-import:
-        condition: service_completed_successfully
+      # n8n-import:
+      #   condition: service_completed_successfully
 
   qdrant:
     image: qdrant/qdrant
-    container_name: qdrant
+    container_name: n8n-qdrant
     # networks: ["demo"]
     restart: unless-stopped
     ports:

@@ -2,6 +2,7 @@ name: redmine
 services:
   postgresql:
     image: docker.io/bitnami/postgresql:16
+    container_name: redmine-postgresql
     volumes:
       - ./storage/postresql:/bitnami/postgresql
     environment:
@@ -12,6 +13,7 @@ services:
 
   redmine:
     image: docker.io/bitnami/redmine:5
+    container_name: redmine
     depends_on:
       - postgresql
     volumes:

@@ -1,6 +1,7 @@
 services:
   app:
     image: cthulhoo/ttrss-fpm-pgsql-static:eb470473
+    container_name: tt-rss
     depends_on:
       - db
     volumes:
@@ -15,6 +16,7 @@ services:
   #  optional, makes weekly backups of your install
   backups:
     image: cthulhoo/ttrss-fpm-pgsql-static:eb470473
+    container_name: tt-rss-backups
     depends_on:
       - db
     volumes:
@@ -29,6 +31,7 @@ services:
     init: true
   db:
     image: postgres:15-alpine
+    container_name: tt-rss-postgresql
     volumes:
       - ./storage/db:/var/lib/postgresql/data
     environment:
@@ -44,6 +47,7 @@ services:
 
   proxy:
     image: nginx:1.27.3
+    container_name: tt-rss-proxy
     depends_on:
       - web-nginx
     volumes:
@@ -65,6 +69,7 @@ services:
 
   updater:
     image: cthulhoo/ttrss-fpm-pgsql-static:eb470473
+    container_name: tt-rss-updater
     depends_on:
       - app
     volumes:
@@ -80,6 +85,7 @@ services:
 
   web-nginx:
     image: cthulhoo/ttrss-web-nginx:472058e0
+    container_name: tt-rss-nginx
     depends_on:
       - app
     volumes:

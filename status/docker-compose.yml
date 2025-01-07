@@ -2,6 +2,7 @@ name: status
 services:
   uptime-kuma:
     image: louislam/uptime-kuma:1.23.15
+    container_name: uptime-kuma
     volumes:
       - ./storage/uptime-kuma:/app/data
     networks:

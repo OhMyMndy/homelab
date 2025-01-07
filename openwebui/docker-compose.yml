@@ -2,6 +2,7 @@ name: openwebui
 services:
   openwebui:
     image: ghcr.io/open-webui/open-webui:0.5.4
+    container_name: open-webui
     volumes:
       - ./storage/open-webui:/app/backend/data
     env_file:
@@ -31,6 +32,7 @@ services:
       start_interval: 5s
   pipelines:
     image: ghcr.io/open-webui/pipelines:git-1367d95
+    container_name: open-webui-pipelines
     volumes:
       - ./storage/pipelines:/app/pipelines
     networks:

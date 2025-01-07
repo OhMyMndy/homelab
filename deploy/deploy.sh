@@ -13,7 +13,7 @@ source deploy/functions.sh
     nix run nixpkgs#flarectl -- dns create-or-update --zone ohmymndy.com --name '*.home' --content $LOCAL_IP --type A) || true
 
 (cd helpers && docker compose build)
-start reverse-proxy lldap adguard smtprelay status vaultwarden authentik dashy homepage wallabag \
+start reverse-proxy lldap monitoring nfty changedetection adguard smtprelay status vaultwarden dashy homepage wallabag \
     redmine tt-rss humblebundle-downloader searxng \
     gitea-mirror \
     kiwix pokeblahaj \

@@ -51,9 +51,10 @@ function start() {
 function add_to_env_force() {
   local key="$1"
   local value="$2"
-  touch .env
-  sed -E -i "/^${key}=/d" .env
-  echo "${key}=${value}" >>.env
+  local filename="${3:-.env}"
+  touch "${filename}"
+  sed -E -i "/^${key}=/d" "${filename}"
+  echo "${key}=${value}" >>"${filename}"
 }
 
 function add_tfvars_force() {
@@ -69,9 +70,10 @@ function add_tfvars_force() {
 function add_to_env() {
   local key="$1"
   local value="$2"
-  touch .env
-  if ! grep -q "${key}=" .env; then
-    echo "${key}=${value}" >>.env
+  local filename="${3:-.env}"
+  touch "${filename}"
+  if ! grep -q "${key}=" "${filename}"; then
+    echo "${key}=${value}" >>"${filename}"
   fi
 }
 

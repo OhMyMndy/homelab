@@ -2,6 +2,7 @@ name: humblebundle-downloader
 services:
   downloader:
     image: ghcr.io/xtream1101/humblebundle-downloader:0.4.3
+    container_name: humblebundle-downloader
     volumes:
       - ./run.sh:/run.sh:ro
       - $HOME/HumbleBundle Ebooks:/library

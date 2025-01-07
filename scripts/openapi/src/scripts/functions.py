@@ -10,6 +10,9 @@ from tailscale_openapi.configuration import Configuration
 from tailscale_openapi.api_client import ApiClient
 from tailscale_openapi.api.dns_api import DNSApi
 
+from authentik_openapi.api_client import ApiClient as AuthentikApiClient
+from authentik_openapi.configuration import Configuration as AuthentikConfiguration
+
 
 # import logging
 # import os
@@ -68,3 +71,9 @@ def set_dns(dns: list[str]):
             pprint(api_response)
         except ApiException as e:
             print("Exception %s\n" % e)
+
+
+def do_configure_authentik():
+    configuration = AuthentikConfiguration()
+    api_client = AuthentikApiClient()
+    pass

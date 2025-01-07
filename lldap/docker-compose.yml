@@ -36,6 +36,7 @@ x-lldap: &lldap
 services:
   render-templates:
     image: ohmymndy/alpine
+    container_name: lldap-render-templates
     restart: no
     volumes:
       - ./:/lldap
@@ -64,6 +65,7 @@ services:
     user: ${PUID:?}:${PGID:?}
   lldap:
     <<: *lldap
+    container_name: lldap
     ports:
       # For LDAP, not recommended to expose, see Usage section.
       # - "3890:3890"
@@ -97,6 +99,7 @@ services:
   lldap-init:
     <<: *lldap
     entrypoint: /bin/bash
+    container_name: lldap-init
     restart: no
     command:
       - -c

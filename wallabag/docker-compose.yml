@@ -2,6 +2,7 @@ name: wallabag
 services:
   wallabag:
     image: wallabag/wallabag:2.6.10
+    container_name: wallabag
     restart: unless-stopped
     volumes:
       - ./storage/images:/var/www/wallabag/web/assets/images

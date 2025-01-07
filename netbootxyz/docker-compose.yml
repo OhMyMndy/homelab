@@ -2,6 +2,7 @@ name: netbootxyz
 services:
   init:
     image: alpine:3.21.0
+    container_name: netbootxyz-init
     restart: unless-stopped
     volumes:
       - ./storage/config:/config

@@ -1,6 +1,7 @@
 services:
   smtprelay:
     image: grafana/smtprelay:2.1.5
+    container_name: smtprelay
     restart: unless-stopped
     init: true
     command:

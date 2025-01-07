@@ -1,0 +1,11 @@
+services:
+  mindsdb:
+    # docker run --name mindsdb_container -p 47334:47334 -p 47335:47335 -v $(pwd)/mdb_data:/root/mdb_storage mindsdb/mindsdb
+    image: mindsdb:mindsdb
+    restart: unless-stopped
+    volumes:
+      - ./storage/mindsdb:/root/mdb_storage
+
+  # TODO add volumes?
+  duckdb:
+    image: datacatering/duckdb:v1.1.3

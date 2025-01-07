@@ -35,6 +35,7 @@ x-gitea: &gitea
 services:
   gitea:
     <<: *gitea
+    container_name: gitea-mirror
     ports:
       - "2222:2222"
     networks:
@@ -64,6 +65,7 @@ services:
 
   gitea-config:
     <<: *gitea
+    container_name: gitea-mirror-config
     entrypoint: /bin/bash
     restart: no
     user: git
@@ -100,6 +102,7 @@ services:
 
   postgres:
     image: postgres:16
+    container_name: gitea-mirror-postgresql
     volumes:
       - ./storage/db/postgres:/var/lib/postgresql/data
     environment:

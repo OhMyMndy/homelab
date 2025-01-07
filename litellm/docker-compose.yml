@@ -2,6 +2,7 @@ name: litellm
 services:
   db:
     image: postgres:16
+    container_name: litellm-postgresqc
     volumes:
       - ./storage/postgres:/var/lib/postgresql/data
     environment:
@@ -18,6 +19,7 @@ services:
       retries: 10
   litellm:
     image: litellm/litellm:v1.56.6
+    container_name: litellm
     volumes:
       - ./litellm-config.yaml:/app/config.yaml
     environment:
@@ -53,6 +55,7 @@ services:
 
   litellm-configure:
     image: ohmymndy/alpine
+    container_name: litellm-configure
     restart: no
     volumes:
       - ../:/start
@@ -66,25 +69,26 @@ services:
       litellm:
         condition: service_healthy
 
-  prometheus:
-    image: prom/prometheus:v3.1.0
-    volumes:
-      - ./storage/prometheus:/prometheus
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    # ports:
-    # - "9090:9090"
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
-      - "--storage.tsdb.path=/prometheus"
-      - "--storage.tsdb.retention.time=15d"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9090"]
-      interval: 1m
-      timeout: 3s
-      retries: 3
-      start_period: 40s
-      start_interval: 5s
+  # prometheus:
+  #   image: prom/prometheus:v3.1.0
+  #
+  #   volumes:
+  #     - ./storage/prometheus:/prometheus
+  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml
+  #   # ports:
+  #   # - "9090:9090"
+  #   command:
+  #     - "--config.file=/etc/prometheus/prometheus.yml"
+  #     - "--storage.tsdb.path=/prometheus"
+  #     - "--storage.tsdb.retention.time=15d"
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9090"]
+  #     interval: 1m
+  #     timeout: 3s
+  #     retries: 3
+  #     start_period: 40s
+  #     start_interval: 5s
 
 networks:
   default:

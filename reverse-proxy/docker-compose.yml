@@ -2,6 +2,7 @@ services:
   traefik:
     image: traefik:v3.1.0
     restart: unless-stopped
+    container_name: traefik
     init: true
     env_file:
       - ./.env

@@ -2,6 +2,7 @@ name: kiwix
 services:
   downloader:
     image: downloader:0.1
+    container_name: kiwix-downloader
     restart: unless-stopped
     build:
       dockerfile: ./aria2/Dockerfile
@@ -14,6 +15,7 @@ services:
     user: "${PUID:?}:${PGID:?}"
   kiwix:
     image: ghcr.io/kiwix/kiwix-serve:3.7.0
+    container_name: kiwix
     volumes:
       - ./storage/:/library
     networks:

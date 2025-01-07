@@ -1,7 +1,7 @@
 services:
-
   minecraft-bedrock-server:
     image: itzg/minecraft-bedrock-server
+    container_name: minecraft-bedrock-server
     environment:
       - UID=${PUID:?}
       - GID=${PGID:?}
