@@ -1,0 +1,43 @@
+name: changedetection
+services:
+  changedetection:
+    image: lscr.io/linuxserver/changedetection.io:0.48.05
+    container_name: changedetection
+    environment:
+      - PUID=${PUID:?}
+      - PGID=${PGID:?}
+      - TZ=${TIMEZONE:?}
+      - BASE_URL= #optional
+      - PLAYWRIGHT_DRIVER_URL=ws://sockpuppetbrowser:3000
+      - DISABLE_VERSION_CHECK=true
+    volumes:
+      - ./config:/config
+    restart: unless-stopped
+    networks:
+      - default
+      - reverse-proxy
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.changedetection.rule=Host(`changedetection.home.ohmymndy.com`)"
+      - "traefik.http.routers.changedetection.tls=true"
+      - "traefik.enable=true"
+    depends_on:
+      sockpuppetbrowser:
+        condition: service_started
+
+  sockpuppetbrowser:
+    container_name: sockpuppetbrowser
+    image: dgtlmoon/sockpuppetbrowser:latest
+    # cap_add:
+    #     - SYS_ADMIN
+    restart: unless-stopped
+    environment:
+      - SCREEN_WIDTH=1920
+      - SCREEN_HEIGHT=1024
+      - SCREEN_DEPTH=16
+      - MAX_CONCURRENT_CHROME_PROCESSES=10
+networks:
+  default:
+  reverse-proxy:
+    external: true
+    name: reverse-proxy
