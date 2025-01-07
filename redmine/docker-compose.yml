@@ -5,9 +5,9 @@ services:
     volumes:
       - ./storage/postresql:/bitnami/postgresql
     environment:
-      - POSTGRESQL_USERNAME=redmine
-      - POSTGRESQL_DATABASE=redmine
-      - POSTGRESQL_PASSWORD=${POSTGRESQL_PASSWORD:-?}
+      - POSTGRESQL_USERNAME=${POSTGRES_USER:?}
+      - POSTGRESQL_DATABASE=${POSTGRES_DB:?}
+      - POSTGRESQL_PASSWORD=${POSTGRES_PASSWORD:-?}
     restart: unless-stopped
 
   redmine:
@@ -21,9 +21,10 @@ services:
       - REDMINE_DATABASE_TYPE=postgresql
       - REDMINE_DATABASE_HOST=postgresql
       - REDMINE_DATABASE_PORT_NUMBER=5432
-      - REDMINE_DATABASE_USER=redmine
-      - REDMINE_DATABASE_PASSWORD=${POSTGRESQL_PASSWORD:-?}
-      - REDMINE_DATABASE_NAME=redmine
+      - REDMINE_DATABASE_USER=${POSTGRES_USER:?}
+      - REDMINE_DATABASE_PASSWORD=${POSTGRES_PASSWORD:-?}
+      - REDMINE_DATABASE_NAME=${POSTGRES_DB:?}
+      - REDMINE_REST_API_ENABLED=1
     networks:
       - default
       - reverse-proxy
