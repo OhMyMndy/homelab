@@ -1,11 +1,15 @@
 name: openwebui
 services:
   openwebui:
-    image: ghcr.io/open-webui/open-webui:0.5.3
+    image: ghcr.io/open-webui/open-webui:0.5.4
     volumes:
       - ./storage/open-webui:/app/backend/data
     env_file:
       - .env
+    environment:
+      # SEE: https://docs.openwebui.com/tutorials/tips/reduce-ram-usage/
+      RAG_EMBEDDING_ENGINE: ollama
+      AUDIO_STT_ENGINE: openai
     networks:
       - default
       - reverse-proxy
