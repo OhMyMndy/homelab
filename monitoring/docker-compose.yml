@@ -1,0 +1,108 @@
+name: monitoring
+services:
+  grafana:
+    image: grafana/grafana:11.4.0
+    volumes:
+      - ./storage/grafana:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/ldap.toml:/etc/grafana/ldap.toml:ro
+    environment:
+      # - GF_SECURITY_ADMIN_USER=${ADMIN_USER:?}
+      # - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:?}
+      # - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_RENDERING_SERVER_URL=http://grafana-image-renderer:8081/render
+      - GF_RENDERING_CALLBACK_URL=http://grafana:3000/
+      - GF_AUTH_LDAP_ENABLED=true
+      - GF_AUTH_LDAP_CONFIG_FILE=/etc/grafana/ldap.toml
+      - GF_AUTH_LDAP_ALLOW_SIGN_UP=true
+      - GF_LOG_FILTERS=ldap:debug
+      - GF_LDAP_HOST=${GF_LDAP_HOST:?}
+      - GF_LDAP_PORT=${GF_LDAP_PORT:?}
+      - GF_LDAP_USER=${GF_LDAP_USER:?}
+      - GF_LDAP_PASS=${GF_LDAP_PASS:?}
+
+    restart: unless-stopped
+    networks:
+      - default
+      - reverse-proxy
+      - lldap
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.home.ohmymndy.com`)"
+      - "traefik.http.routers.grafana.tls=true"
+      - "traefik.enable=true"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-s", "http://127.0.0.1:3000"]
+      interval: 15s
+      timeout: 2s
+      retries: 3
+      start_period: 40s
+      start_interval: 5s
+
+  grafana-image-renderer:
+    image: grafana/grafana-image-renderer:3.11.6
+    restart: unless-stopped
+    environment:
+      ENABLE_METRICS: "true"
+
+  # loki:
+  #   image: grafana/loki:3.3.2
+  #   restart: unless-stopped
+  #
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    restart: unless-stopped
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - ./storage/prometheus:/prometheus
+    depends_on:
+      - cadvisor
+    networks:
+      - default
+      - reverse-proxy
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.home.ohmymndy.com`)"
+      - "traefik.http.routers.prometheus.tls=true"
+      - "traefik.enable=true"
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.2
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    restart: unless-stopped
+    networks:
+      - default
+      - reverse-proxy
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.cadvisor.rule=Host(`cadvisor.home.ohmymndy.com`)"
+      - "traefik.http.routers.cadvisor.tls=true"
+      - "traefik.enable=true"
+
+  nodeexporter:
+    image: prom/node-exporter:v1.8.2
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.rootfs=/rootfs"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)"
+    restart: unless-stopped
+
+networks:
+  default:
+  reverse-proxy:
+    external: true
+    name: reverse-proxy
+  lldap:
+    name: lldap_default
+    external: true

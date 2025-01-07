@@ -1,0 +1,48 @@
+[[servers]]
+port = ${GF_LDAP_PORT}
+# Type is integer for field port, taplo says this is an error...
+host = "${GF_LDAP_HOST}"
+use_ssl = false
+start_tls = false
+tls_ciphers = []
+min_tls_version = ""
+ssl_skip_verify = false
+
+bind_dn = "${GF_LDAP_USER}"
+bind_password = "${GF_LDAP_PASS}"
+
+timeout = 10
+
+search_filter = "(|(uid=%s)(mail=%s))"
+
+# --user-search-base "ou=people,dc=ohmymndy,dc=com" \
+# --user-filter "(&(objectClass=person)(|(uid=%[1]s)(mail=%[1]s)))" \
+# An array of base dns to search through
+search_base_dns = ["dc=ohmymndy,dc=com"]
+
+
+# Specify names of the LDAP attributes your LDAP uses
+[servers.attributes]
+member_of = "memberOf"
+email = "mail"
+name = "displayName"
+surname = "sn"
+username = "uid"
+
+[[servers.group_mappings]]
+group_dn = "cn=lldap_admin,ou=groups,dc=ohmymndy,dc=com"
+org_role = "Admin"
+grafana_admin = true
+
+# [[servers.group_mappings]]
+# group_dn = "cn=grafana_admin,ou=groups,dc=ohmymndy,dc=com"
+# org_role = "Admin"
+# grafana_admin = true
+#
+# [[servers.group_mappings]]
+# group_dn = "cn=grafana_editor,ou=groups,dc=ohmymndy,dc=com"
+# org_role = "Editor"
+#
+# [[servers.group_mappings]]
+# group_dn = "cn=grafana,ou=groups,dc=ohmymndy,dc=com"
+# org_role = "Viewer"
