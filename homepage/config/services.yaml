@@ -1,18 +1,34 @@
 # For configuration options and examples, please see:
 # https://gethomepage.dev/configs/services
 - My First Group:
-  - My First Service:
-    href: http://localhost/
-    description: Homepage is awesome
-- My Second Group:
-  - My Second Service:
+    - My First Service:
       href: http://localhost/
-      description: Homepage is the best
-- My Third Group:
-  - Traefik:
-      href: https://traefik.home.ohmymndy.com
-      widget:
-         type: traefik
-         url: http://traefik:8080
-         # username: username # optional
-         # password: password # optional
+      description: Homepage is awesome
+
+- Infra:
+    - Traefik:
+        href: https://traefik.home.ohmymndy.com
+        widget:
+          type: traefik
+          url: http://traefik:8080
+          # username: username # optional
+          # password: password # optional
+  #
+- Machine Learning:
+    - Open Router:
+        href: https://openrouter.ai
+        widget:
+          type: customapi
+          url: https://openrouter.ai/api/v1/auth/key
+          refreshInterval: 36000000 # 1 hour
+          # refreshInterval: 10000 # 1 hour
+          method: GET # optional, e.g. POST
+          headers: # optional, must be object, see below
+            Authorization: "Bearer {{HOMEPAGE_VAR_OPENROUTER_KEY}}"
+          display: list # optional, default to block, see below
+          mappings:
+            - field: # needs to be YAML string or object
+                data: limit_remaining
+              label: Limit remaining
+              format: float
+              prefix: "€"

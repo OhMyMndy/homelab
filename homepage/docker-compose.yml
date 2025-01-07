@@ -13,12 +13,15 @@ services:
     restart: unless-stopped
   homepage:
     image: ghcr.io/gethomepage/homepage:v0.9.13
+    restart: unless-stopped
     container_name: homepage
     volumes:
       - ./config:/app/config
     environment:
       PUID: ${PUID:?}
       PGID: ${PGID:?}
+    env_file:
+      - .env
     networks:
       - default
       - reverse-proxy
