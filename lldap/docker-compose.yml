@@ -97,10 +97,11 @@ services:
   lldap-init:
     <<: *lldap
     entrypoint: /bin/bash
+    restart: no
     command:
       - -c
       - |
-        bash -x /app/bootstrap.sh
+        bash /app/bootstrap.sh
     environment:
       - LLDAP_URL=http://lldap:17170
       - LLDAP_ADMIN_PASSWORD=${LLDAP_LDAP_USER_PASS:?}
