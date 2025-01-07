@@ -2,6 +2,7 @@ name: monitoring
 services:
   grafana:
     image: grafana/grafana:11.4.0
+    container_name: grafana
     volumes:
       - ./storage/grafana:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
@@ -17,7 +18,8 @@ services:
       - GF_LDAP_PORT=${GF_LDAP_PORT:?}
       - GF_LDAP_USER=${GF_LDAP_USER:?}
       - GF_LDAP_PASS=${GF_LDAP_PASS:?}
-
+      - GF_INSTALL_PLUGINS=https://github.com/VictoriaMetrics/victoriametrics-datasource/releases/download/v0.10.3/victoriametrics-datasource-v0.10.3.zip;victoriametrics-datasource
+      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=victoriametrics-datasource
     restart: unless-stopped
     networks:
       - default
@@ -38,6 +40,7 @@ services:
 
   grafana-image-renderer:
     image: grafana/grafana-image-renderer:3.11.6
+    container_name: grafana-image-renderer
     restart: unless-stopped
     environment:
       ENABLE_METRICS: "true"
@@ -46,28 +49,52 @@ services:
   #   image: grafana/loki:3.3.2
   #   restart: unless-stopped
   #
-  prometheus:
-    image: prom/prometheus:v3.1.0
+  #
+  #
+  vmagent:
+    container_name: vmagent
+    image: victoriametrics/vmagent:v1.108.1
+    depends_on:
+      - "victoriametrics"
+    environment:
+      - PVE_PROMETHEUS_PASSWORD=${PVE_PROMETHEUS_PASSWORD:?}
+    volumes:
+      - ./storage/vmagentdata:/vmagentdata
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--promscrape.config=/etc/prometheus/prometheus.yml"
+      - "--remoteWrite.url=http://victoriametrics:8428/api/v1/write"
+    restart: unless-stopped
+    extra_hosts:
+      - host.docker.internal:host-gateway
+
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:v1.108.1
+    container_name: victoriametrics
     restart: unless-stopped
     volumes:
-      - ./prometheus:/etc/prometheus
-      - ./storage/prometheus:/prometheus
-    depends_on:
-      - cadvisor
+      - ./storage/victoriametrics:/storage
+    command:
+      - "--storageDataPath=/storage"
+    # depends_on:
+    #   - cadvisor
     networks:
       - default
       - reverse-proxy
-    labels:
-      - "traefik.docker.network=reverse-proxy"
-      - "traefik.http.routers.prometheus.rule=Host(`prometheus.home.ohmymndy.com`)"
-      - "traefik.http.routers.prometheus.tls=true"
-      - "traefik.enable=true"
-
+    # labels:
+    #   - "traefik.docker.network=reverse-proxy"
+    #   - "traefik.http.routers.prometheus.rule=Host(`prometheus.home.ohmymndy.com`)"
+    #   - "traefik.http.routers.prometheus.tls=true"
+    #   - "traefik.enable=true"
+  #
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.49.2
+    container_name: cadvisor
     privileged: true
+    command:
+      - --docker_only=true
+      - --store_container_labels=false
+      - --enable_metrics=cpu,diskIO,memory,network # advtcp,app,cpu,cpuLoad,cpu_topology,cpuset,disk,diskIO,hugetlb,memory,memory_numa,network,oom_event,percpu,perf_event,process,referenced_memory,resctrl,sched,tcp,udp
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
@@ -85,19 +112,35 @@ services:
       - "traefik.http.routers.cadvisor.rule=Host(`cadvisor.home.ohmymndy.com`)"
       - "traefik.http.routers.cadvisor.tls=true"
       - "traefik.enable=true"
+    healthcheck:
+      test:
+        ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/containers"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+      start_interval: 5s
 
-  nodeexporter:
+  node-exporter:
     image: prom/node-exporter:v1.8.2
-    volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /:/rootfs:ro
+    container_name: node-exporter
     command:
-      - "--path.procfs=/host/proc"
-      - "--path.rootfs=/rootfs"
-      - "--path.sysfs=/host/sys"
-      - "--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)"
+      - "--path.rootfs=/host"
+    network_mode: host
+    pid: host
     restart: unless-stopped
+    volumes:
+      - "/:/host:ro,rslave"
+    # volumes:
+    #   - /proc:/host/proc:ro
+    #   - /sys:/host/sys:ro
+    #   - /:/rootfs:ro
+    # command:
+    #   - "--path.procfs=/host/proc"
+    #   - "--path.rootfs=/rootfs"
+    #   - "--path.sysfs=/host/sys"
+    #   - "--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)"
+    # restart: unless-stopped
 
 networks:
   default:

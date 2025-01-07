@@ -1,8 +1,8 @@
 scrape_configs:
-  - job_name: "nodeexporter"
+  - job_name: "node-exporter"
     scrape_interval: 10s
     static_configs:
-      - targets: ["nodeexporter:9100"]
+      - targets: ["host.docker.internal:9100"]
 
   - job_name: cadvisor
     scrape_interval: 10s
@@ -10,7 +10,19 @@ scrape_configs:
       - targets:
           - cadvisor:8080
 
-  - job_name: "prometheus"
-    scrape_interval: 10s
+  - job_name: "victoriametrics"
     static_configs:
-      - targets: ["localhost:9090"]
+      - targets: ["victoriametrics:8428"]
+
+  - job_name: "pve"
+    static_configs:
+      - targets:
+          - 10.0.40.6:9221
+    metrics_path: /pve
+    basic_auth:
+      username: prometheus@pve
+      password: "%{PVE_PROMETHEUS_PASSWORD}"
+    # params:
+    #   module: [default]
+    #   cluster: ["1"]
+    #   node: ["1"]
