@@ -12,6 +12,10 @@ cat <<EOF | sudo tee /etc/docker/daemon.json
       "base" : "192.168.0.0/16",
       "size" : 24
     }
-  ]
+  ],
+  "log-opts": {
+    "max-file": "3",
+    "max-size": "10m"
+  }
 }
 EOF
