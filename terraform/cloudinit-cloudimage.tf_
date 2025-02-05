@@ -1,0 +1,193 @@
+locals {
+  node_name    = "pve-1"
+  datastore_id = "local-zfs"
+}
+resource "proxmox_virtual_environment_vm" "talos_1_9_3_template" {
+  name        = "talos-1-9-3-template"
+  description = "Managed by Terraform"
+  tags        = ["terraform", "talos", "template"]
+  vm_id       = 9001
+
+  node_name = local.node_name
+
+  agent {
+    # read 'Qemu guest agent' section, change to true only when ready
+    enabled = false
+    trim    = true
+  }
+
+  initialization {
+    datastore_id = local.datastore_id
+    ip_config {
+      ipv4 {
+        address = "dhcp"
+      }
+    }
+  }
+
+  machine = "q35"
+
+  operating_system {
+    type = "l26"
+  }
+
+  cpu {
+    # type    = "x86-64-v2-AES"
+    type    = "host"
+    sockets = 1
+    cores   = 1
+  }
+
+  memory {
+    dedicated = 2048
+  }
+
+  on_boot         = false
+  started         = false
+  template        = true
+  stop_on_destroy = true
+
+  disk {
+    datastore_id = local.datastore_id
+    file_id      = proxmox_virtual_environment_download_file.talos_1_9_3.id
+    interface    = "virtio0"
+    iothread     = false
+    discard      = "on"
+    size         = 20
+    file_format  = "raw"
+  }
+
+  network_device {
+    bridge = "vmbr0"
+  }
+
+  bios = "ovmf"
+
+  efi_disk {
+    file_format  = "raw"
+    type         = "4m"
+    datastore_id = local.datastore_id
+  }
+
+  tpm_state {
+    version = "v2.0"
+    datastore_id = local.datastore_id
+  }
+
+  lifecycle {
+    ignore_changes = [
+      started
+    ]
+  }
+}
+
+# Jumphost for EyeDeck
+resource "proxmox_virtual_environment_vm" "talos_controlplane_1" {
+  name        = "talos-controlplane-1"
+  description = "Managed by Terraform"
+  tags        = ["terraform", "talos", "kubernetes"]
+
+  vm_id     = 3001
+  node_name = local.node_name
+
+  # pool_id = proxmox_virtual_environment_pool.eyedeck_pool.id
+
+  agent {
+    # read 'Qemu guest agent' section, change to true only when ready
+    enabled = true
+    trim    = true
+  }
+
+  # Clone from Ubuntu 23.10 Template
+  clone {
+    node_name    = local.node_name
+    datastore_id = local.datastore_id
+    vm_id        = proxmox_virtual_environment_vm.talos_1_9_3_template.vm_id
+  }
+
+  initialization {
+    datastore_id = local.datastore_id
+    # ip_config {
+    #   ipv4 {
+    #     address = "dhcp"
+    #   }
+    # }
+    ip_config {
+      ipv4 {
+        address = "10.0.40.66/24"
+        gateway = "10.0.40.1"
+      }
+    }
+
+    dns {
+      servers = ["10.0.40.4", "10.0.40.1"]
+      domain  = "home.mndy.be"
+    }
+    # dns {
+    #   servers = ["10.10.42.1"]
+    #   domain  = "spyrja.internal"
+    # }
+
+    user_data_file_id = proxmox_virtual_environment_file.talos_controlplane_config.id
+    meta_data_file_id = proxmox_virtual_environment_file.talos_controlplane_metadata.id
+  }
+
+  # The Ubuntu 23.10 template only has a single core
+  cpu {
+    sockets = 1
+    cores   = 2
+  }
+
+  started         = true
+  on_boot         = true
+  stop_on_destroy = true
+  # Increase disk size over the clone
+  disk {
+    datastore_id = local.datastore_id
+    interface    = "virtio0"
+    discard      = "on"
+    size         = 60
+  }
+
+  # For now, EyeDeck uses the same bridge, just has to set a vlan.
+  # One day, I'll figure out how to create SDN zones and such with
+  # the proxmox provider.
+  network_device {
+    bridge  = "vmbr0"
+    vlan_id = "42"
+  }
+
+  lifecycle {
+    ignore_changes = [
+      started,
+      initialization[0].user_data_file_id,
+      clone[0].vm_id
+    ]
+  }
+}
+
+
+resource "proxmox_virtual_environment_file" "talos_controlplane_config" {
+  content_type = "snippets"
+  datastore_id = "local"
+  node_name    = local.node_name
+
+  source_raw {
+    data      = file("${path.module}/_out/controlplane.yaml")
+    file_name = "talos_controlplane_config.yaml"
+  }
+}
+
+resource "proxmox_virtual_environment_file" "talos_controlplane_metadata" {
+  content_type = "snippets"
+  datastore_id = "local"
+  node_name    = local.node_name
+
+  source_raw {
+    data = <<EOF
+local-hostname: controlplane-1
+EOF
+
+    file_name = "talos_controlplane_metadata.yaml"
+  }
+}

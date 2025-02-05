@@ -5,4 +5,8 @@ provider "proxmox" {
   ssh {
     agent = true
   }
+
+  # timeout {
+  #   create = "20m"
+  # }
 }

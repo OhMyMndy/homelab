@@ -15,6 +15,29 @@ resource "proxmox_virtual_environment_download_file" "ubuntu_24_04_desktop" {
   overwrite           = false
   overwrite_unmanaged = true
 }
+resource "proxmox_virtual_environment_download_file" "alma-linux-9-5" {
+  content_type        = "iso"
+  datastore_id        = "local"
+  node_name           = "pve-1"
+  url                 = "https://repo.almalinux.org/almalinux/9.5/isos/x86_64/AlmaLinux-9.5-x86_64-dvd.iso"
+  checksum            = "3947accd140a2a1833b1ef2c811f8c0d48cd27624cad343992f86cfabd2474c9"
+  checksum_algorithm  = "sha256"
+  overwrite           = false
+  overwrite_unmanaged = true
+}
+
+resource "proxmox_virtual_environment_download_file" "fedora-41-kde-mobile" {
+  content_type        = "iso"
+  datastore_id        = "local"
+  node_name           = "pve-1"
+  url                 = "https://download.fedoraproject.org/pub/fedora/linux/releases/41/Spins/x86_64/iso/Fedora-KDE-Mobile-Live-41-1.4.x86_64.iso"
+  checksum            = "0013147b27a5082d07f0c3e5851c1182b7f10980bb690a9e710d735e96cb81cb"
+  checksum_algorithm  = "sha256"
+  overwrite           = false
+  overwrite_unmanaged = true
+}
+
+
 
 resource "proxmox_virtual_environment_download_file" "fedora_41" {
   content_type        = "iso"
@@ -39,28 +62,20 @@ resource "proxmox_virtual_environment_download_file" "opensense_24_7" {
   file_name               = "OPNsense-24.7-dvd-amd64.iso"
 }
 
-# # Schematic ID: 501dea708aa95f4a8c32444df660bc209e67fc82fb1e831a830fe380d9a89af5https://releases.ubuntu.com/24.04.1/ubuntu-24.04.1-desktop-amd64.iso
-# # https://factory.talos.dev/?arch=amd64&cmdline-set=true&extensions=-&extensions=siderolabs%2Fbtrfs&extensions=siderolabs%2Ffuse3&extensions=siderolabs%2Fiscsi-tools&extensions=siderolabs%2Fkata-containers&extensions=siderolabs%2Fmdadm&extensions=siderolabs%2Fqemu-guest-agent&extensions=siderolabs%2Ftailscale&extensions=siderolabs%2Futil-linux-tools&extensions=siderolabs%2Fzfs&platform=nocloud&target=cloud&version=1.8.3
 # customization:
-#    systemExtensions:
-#        officialExtensions:
-#            - siderolabs/btrfs
-#            - siderolabs/fuse3
-#            - siderolabs/iscsi-tools
-#            - siderolabs/kata-containers
-#            - siderolabs/mdadm
-#            - siderolabs/qemu-guest-agent
-#            - siderolabs/tailscale
-#            - siderolabs/util-linux-tools
-#            - siderolabs/zfs
-resource "proxmox_virtual_environment_download_file" "talos_1_8_3" {
-  content_type        = "iso"
-  datastore_id        = "local"
-  node_name           = "pve-1"
-  url                 = "https://factory.talos.dev/image/501dea708aa95f4a8c32444df660bc209e67fc82fb1e831a830fe380d9a89af5/v1.8.3/nocloud-amd64.iso"
-  file_name           = "talos-1.8.3.iso"
-  overwrite           = false
-  overwrite_unmanaged = true
+#     systemExtensions:
+#         officialExtensions:
+#             - siderolabs/qemu-guest-agent
+## Schematic ID: ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515
+resource "proxmox_virtual_environment_download_file" "talos_1_9_3" {
+  content_type            = "iso"
+  datastore_id            = "local"
+  node_name               = "pve-1"
+  url                     = "https://factory.talos.dev/image/ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515/v1.9.3/nocloud-amd64.raw.gz"
+  decompression_algorithm = "gz"
+  file_name               = "talos-1.9.3.iso"
+  overwrite               = true
+  overwrite_unmanaged     = true
 }
 
 
