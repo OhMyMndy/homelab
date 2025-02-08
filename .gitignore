@@ -9,3 +9,11 @@
 acme.json*
 docker-compose.override.yml
 !.keep
+
+
+terraform.tfvars
+.terraform
+.terraform.lock.hcl
+terraform.tfstate*
+tmp/
+ansible-inventory.yml
