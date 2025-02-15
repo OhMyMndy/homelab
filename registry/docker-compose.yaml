@@ -1,0 +1,101 @@
+# docker compose exec registry-gcr-io ash -c "wget -q registry-docker.io:5000/v2/_catalog -O - && wget -q registry-gcr.io:5000/v2/_catalog -O - && wget -q registry-ghcr.io:5000/v2/_catalog -O - && wget -q registry-k8s.io:5000/v2/_catalog -O -"
+services:
+  registry-docker-io:
+    image: registry:2
+    container_name: registry-docker.io
+    environment:
+      REGISTRY_PROXY_REMOTEURL: https://registry-1.docker.io
+    restart: always
+    volumes:
+      - registry_docker_io_data:/var/lib/registry
+    networks:
+      - default
+      - reverse-proxy
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.registry-docker-io.rule=Host(`registry-docker-io.home.ohmymndy.com`)"
+      - "traefik.http.services.registry-docker-io.loadbalancer.server.port=5000"
+      - "traefik.http.routers.registry-docker-io.tls=true"
+      - "traefik.enable=true"
+
+  registry-k8s-io:
+    image: registry:2
+    container_name: registry-k8s.io
+    environment:
+      REGISTRY_PROXY_REMOTEURL: https://registry.k8s.io
+    restart: always
+    volumes:
+      - registry_k8s_io_data:/var/lib/registry
+    networks:
+      - default
+      - reverse-proxy
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.registry-k8s-io.rule=Host(`registry-k8s-io.home.ohmymndy.com`)"
+      - "traefik.http.services.registry-k8s-io.loadbalancer.server.port=5000"
+      - "traefik.http.routers.registry-k8s-io.tls=true"
+      - "traefik.enable=true"
+
+  registry-gcr-io:
+    image: registry:2
+    container_name: registry-gcr.io
+    environment:
+      REGISTRY_PROXY_REMOTEURL: https://gcr.io
+    restart: always
+    volumes:
+      - registry_gcr_io_data:/var/lib/registry
+    networks:
+      - default
+      - reverse-proxy
+    # command: server
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.registry-gcr-io.rule=Host(`registry-gcr-io.home.ohmymndy.com`)"
+      - "traefik.http.services.registry-gcr-io.loadbalancer.server.port=5000"
+      - "traefik.http.routers.registry-gcr-io.tls=true"
+      - "traefik.enable=true"
+
+  registry-ghcr-io:
+    image: registry:2
+    container_name: registry-ghcr.io
+    environment:
+      REGISTRY_PROXY_REMOTEURL: https://ghcr.io
+    restart: always
+    volumes:
+      - registry_ghcr_io_data:/var/lib/registry
+    networks:
+      - default
+      - reverse-proxy
+    # command: server
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.registry-ghcr-io.rule=Host(`registry-ghcr-io.home.ohmymndy.com`)"
+      - "traefik.http.services.registry-ghcr-io.loadbalancer.server.port=5000"
+      - "traefik.http.routers.registry-ghcr-io.tls=true"
+      - "traefik.enable=true"
+    # healthcheck:
+    #   test:
+    #     [
+    #       "CMD",
+    #       "wget",
+    #       "--no-verbose",
+    #       "--tries=1",
+    #       "--spider",
+    #       "http://127.0.0.1:5000",
+    #     ]
+    #   interval: 30s
+    #   timeout: 3s
+    #   start_period: 60s
+    #   start_interval: 5s
+volumes:
+  registry_docker_io_data:
+  registry_k8s_io_data:
+  registry_gcr_io_data:
+  registry_ghcr_io_data:
+
+
+networks:
+  default:
+  reverse-proxy:
+    name: reverse-proxy
+    external: true
