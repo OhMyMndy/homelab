@@ -1,0 +1,70 @@
+services:
+  db:
+    image: mariadb:10.6
+    restart: unless-stopped
+    container_name: nextcloud-db
+    networks:
+      - default
+    command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
+    volumes:
+      - ./storage/db:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:?}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:?}
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+
+  redis:
+    image: docker.io/valkey/valkey:8-alpine
+    container_name: nextcloud-redis
+    command: valkey-server --save 30 1 --loglevel warning
+    restart: unless-stopped
+    volumes:
+      - redis:/data
+    mem_limit: 256M
+    cpus: 0.25
+  app:
+    image: nextcloud:30.0.6-apache
+    restart: unless-stopped
+    init: true
+    container_name: nextcloud
+    cpus: 1.25
+    networks:
+      - default
+      - reverse-proxy
+    links:
+      - db
+    volumes:
+      - /mnt/nextcloud:/mnt/nextcloud
+      - ./storage/nextcloud:/var/www/html
+    environment:
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:?}
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_HOST=db
+      - REDIS_HOST=redis
+      - NEXTCLOUD_DATA_DIR=/mnt/nextcloud/
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.home.ohmymndy.com`)"
+      # - "traefik.http.routers.nextcloud.service=nextcloud"
+      # - "traefik.http.services.nextcloud.loadbalancer.server.port=9000"
+      - "traefik.http.routers.nextcloud.tls=true"
+      - "traefik.enable=true"
+    healthcheck:
+      test:
+        ["CMD-SHELL", "bash", "-c", "cat < /dev/null > /dev/tcp/127.0.0.1/80"]
+      interval: 1m
+      timeout: 1s
+      retries: 3
+      start_period: 2m
+      start_interval: 1s
+
+networks:
+  default:
+  reverse-proxy:
+    name: reverse-proxy
+    external: true
+
+volumes:
+  redis:
