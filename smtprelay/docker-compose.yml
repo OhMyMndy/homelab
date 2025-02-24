@@ -6,12 +6,16 @@ services:
     init: true
     command:
       - -remote_host=${REMOTE_HOST:?}
-      - -remote_user=${USERNAME:?}
-      - -remote_sender=${USERNAME:?}
-      - -remote_pass=${PASSWORD:?}
-      - -hostname=homelab-smtprelay
-      # - -allowed_users=${ALLOWED_USERS:?}
+      - -remote_user=${REMOTE_USER:?}
+      - -remote_sender=${REMOTE_SENDER:?}
+      - -remote_pass=${REMOTE_PASS:?}
+      - -allowed_sender=${ALLOWED_SENDER:?}
+      - -allowed_recipients=${ALLOWED_RECIPIENTS:-}
+      - -hostname=smtprelay
       - -listen=${LISTEN:?}
+      - -allowed_nets=${ALLOWED_NETS:-}
+    ports:
+      - 127.0.0.1:25:25
 
 networks:
   default:

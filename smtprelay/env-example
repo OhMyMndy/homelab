@@ -1,6 +1,2 @@
-REMOTE_HOST=smtp.gmail.com:587
-PASSWORD=the-password
-USERNAME=username@gmail.com
-ALLOWED_USERS=username@gmail.com
-ALLOWED_RECIPIENTS=.*@gmail.com
-LISTEN=0.0.0.0:25
+ALLOWED_NETS=
+ALLOWED_RECIPIENTS=

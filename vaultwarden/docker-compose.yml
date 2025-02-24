@@ -1,18 +1,31 @@
 name: vaultwarden
 services:
   vaultwarden:
-    image: vaultwarden/server:1.31.0
+    image: vaultwarden/server:1.32.7
     container_name: vaultwarden
     volumes:
       - ./storage/vaultwarden:/data/:rw
     environment:
       - ADMIN_TOKEN=${BITWARDEN_ADMIN_TOKEN:?}
-      - SMTP_PASSWORD=${BITWARDEN_SMTP_PASSWORD:?}
-      - SMTP_USERNAME=${SMTP_USERNAME:?}
+      - SMTP_HOST=${SMTP_HOST:?}
+      - SMTP_FROM=${SMTP_FROM:?}
+      - SMTP_PORT=${SMTP_PORT:?}
+      - SMTP_SECURITY=${SMTP_SECURITY:?}
+      # - SMTP_PASSWORD=${SMTP_PASSWORD:?}
+      # - SMTP_USERNAME=${SMTP_USERNAME:?}
+      - DOMAIN=https://passwords.home.ohmymndy.com
     networks:
       - default
       - reverse-proxy
+      - smtprelay
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-s", "-l", "http://127.0.0.1:80"]
+      interval: 30s
+      timeout: 2s
+      retries: 3
+      start_period: 40s
+      start_interval: 5s
     labels:
       - "traefik.http.routers.bitwarden.rule=Host(`passwords.home.ohmymndy.com`)"
       - "traefik.http.routers.bitwarden.tls=true"
@@ -24,4 +37,7 @@ networks:
   default:
   reverse-proxy:
     name: reverse-proxy
+    external: true
+  smtprelay:
+    name: smtprelay
     external: true
