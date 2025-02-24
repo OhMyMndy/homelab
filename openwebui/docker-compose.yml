@@ -1,7 +1,7 @@
 name: openwebui
 services:
   openwebui:
-    image: ghcr.io/open-webui/open-webui:0.5.4
+    image: ghcr.io/open-webui/open-webui:0.5.14
     container_name: open-webui
     volumes:
       - ./storage/open-webui:/app/backend/data
@@ -11,6 +11,8 @@ services:
       # SEE: https://docs.openwebui.com/tutorials/tips/reduce-ram-usage/
       RAG_EMBEDDING_ENGINE: ollama
       AUDIO_STT_ENGINE: openai
+      CONTENT_EXTRACTION_ENGINE: tika
+      TIKA_SERVER_URL: http://tika:9998
     networks:
       - default
       - reverse-proxy
@@ -24,14 +26,29 @@ services:
       - "traefik.http.routers.openwebui.tls=true"
       - "traefik.enable=true"
     healthcheck:
-      test: ["CMD", "curl", "-f", "-s", "http://127.0.0.1:8080"]
+      test: ["CMD", "curl", "-f", "-s", "-l", "http://127.0.0.1:8080"]
       interval: 15s
       timeout: 2s
       retries: 3
       start_period: 40s
       start_interval: 5s
+  tika:
+    image: apache/tika:3.1.0.0
+    container_name: open-webui-tika
+    # ports:
+    #   - "9998:9998"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        ["CMD-SHELL", "bash", "-c", "cat < /dev/null > /dev/tcp/127.0.0.1/9998"]
+      interval: 1m
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+      start_interval: 5s
+
   pipelines:
-    image: ghcr.io/open-webui/pipelines:git-1367d95
+    image: ghcr.io/open-webui/pipelines:git-ab9012c
     container_name: open-webui-pipelines
     volumes:
       - ./storage/pipelines:/app/pipelines
@@ -41,14 +58,14 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
-    labels:
-      - "traefik.docker.network=reverse-proxy"
-      - "traefik.http.routers.openwebui-pipelines.rule=Host(`openwebui-pipeline\
-        s.home.ohmymndy.com`)"
-      - "traefik.http.routers.openwebui-pipelines.tls=true"
-      - "traefik.enable=true"
+#    labels:
+#      - "traefik.docker.network=reverse-proxy"
+#      - "traefik.http.routers.openwebui-pipelines.rule=Host(`openwebui-pipeline\
+#        s.home.ohmymndy.com`)"
+#      - "traefik.http.routers.openwebui-pipelines.tls=true"
+#      - "traefik.enable=true"
     healthcheck:
-      test: ["CMD", "curl", "-f", "-s", "http://127.0.0.1:9099"]
+      test: ["CMD", "curl", "-f", "-s", "-l", "http://127.0.0.1:9099"]
       interval: 15s
       timeout: 2s
       retries: 3
