@@ -18,7 +18,7 @@ services:
       timeout: 5s
       retries: 10
   litellm:
-    image: litellm/litellm:v1.56.6
+    image: litellm/litellm:v1.59.8
     container_name: litellm
     volumes:
       - ./litellm-config.yaml:/app/config.yaml
@@ -28,6 +28,7 @@ services:
       LITELLM_MASTER_KEY: "${LITELLM_MASTER_KEY:?}"
       LITELLM_SALT_KEY: "${LITELLM_SALT_KEY:?}"
       OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:?}"
+      LITELLM_LOG: "INFO"
     networks:
       - default
       - reverse-proxy
@@ -48,10 +49,10 @@ services:
       test:
         ["CMD-SHELL", "bash", "-c", "cat < /dev/null > /dev/tcp/127.0.0.1/4000"]
       interval: 1m
-      timeout: 3s
+      timeout: 1s
       retries: 3
-      start_period: 40s
-      start_interval: 5s
+      start_period: 30s
+      start_interval: 1s
 
   litellm-configure:
     image: ohmymndy/alpine
