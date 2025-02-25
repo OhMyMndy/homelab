@@ -1,0 +1,47 @@
+services:
+  luminus-dynamic-api:
+    image: ohmymndy/luminus-dynamic-api:0.5
+    container_name: luminus-dynamic-api
+    environment:
+      SQLALCHEMY_DATABASE_URI: postgresql://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@postgres-lda:5432/${POSTGRES_DB:?}
+    init: true
+    entrypoint: ash
+    depends_on:
+      - postgres-lda
+    command:
+      - -c
+      - |
+        while true; do
+          python /app/sync.py
+          sleep 3600
+        done
+
+  postgres-lda:
+    image: postgres:17-alpine
+    container_name: luminus-dynamic-api-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:?}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?}
+      - POSTGRES_DB=${POSTGRES_DB:?}
+    ports:
+      - 23441:5432
+    volumes:
+      - ./storage/postgres:/var/lib/postgres/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -h localhost -U $${POSTGRES_USER} -d $${POSTGRES_DB}",
+        ]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+      start_interval: 2s
+
+networks:
+  default:
+  reverse-proxy:
+    name: reverse-proxy
+    external: true
