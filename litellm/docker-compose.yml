@@ -17,11 +17,26 @@ services:
       interval: 1s
       timeout: 5s
       retries: 10
+  init:
+    image: hairyhenderson/gomplate:stable
+    container_name: litellm-init
+    restart: no
+    user: ${PUID:?}:${PGID:?}
+    working_dir: /config
+    command: -c .=/models.yaml --input-dir /templates --output-dir /config
+    volumes:
+      - ./config:/config
+      - ./models.yaml:/models.yaml:ro
+      - ./templates:/templates
+
   litellm:
     image: litellm/litellm:v1.59.8
     container_name: litellm
     volumes:
-      - ./litellm-config.yaml:/app/config.yaml
+      - ./config/litellm-config.yaml:/app/config.yaml
+    depends_on:
+      init:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: "postgresql://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@db:5432/${POSTGRES_DB:?}"
       STORE_MODEL_IN_DB: "False" # allows adding models to proxy via UI
@@ -40,11 +55,7 @@ services:
       - "traefik.http.routers.litellm.rule=Host(`litellm.home.ohmymndy.com`)"
       - "traefik.http.routers.litellm.tls=true"
       - "traefik.enable=true"
-    # develop:
-    #   watch:
-    #     - action: sync+restart
-    #       path: ./litellm-config.yaml
-    #       target: /app/config.yaml
+
     healthcheck:
       test:
         ["CMD-SHELL", "bash", "-c", "cat < /dev/null > /dev/tcp/127.0.0.1/4000"]

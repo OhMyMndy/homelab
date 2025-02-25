@@ -1,0 +1,11 @@
+paid:
+  - "mistralai/mistral-nemo"
+  - "mistralai/mistral-large-2411"
+  - "openai/gpt-4o-2024-11-20"
+  - "openai/o1-mini-2024-09-12"
+  - "google/gemini-2.0-flash-001"
+  - "meta-llama/llama-3.1-8b-instruct"
+  - "deepseek/deepseek-r1-distill-llama-70b"
+  - "deepseek/deepseek-r1"
+
+free: []

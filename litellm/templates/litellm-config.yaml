@@ -1,0 +1,29 @@
+litellm_settings:
+  json_logs: true
+general_settings:
+  disable_master_key_return: true
+model_list:
+{{ range .paid }}
+  - model_name: "{{ . }}"
+    litellm_params:
+      model: "openrouter/{{ . }}"
+      api_key: os.environ/OPENROUTER_API_KEY
+      tags: ["paid"]
+
+{{ end }}
+
+{{ range .free }}
+  - model_name: "{{ . }}"
+    litellm_params:
+      model: "openrouter/{{ . }}"
+      api_key: os.environ/OPENROUTER_API_KEY
+      tags: ["free"]
+{{ end }}
+
+  - model_name: "ollama/phi4:14b (self hosted)"
+    litellm_params:
+      tags: ["free"]
+      model: "ollama/phi4:14b"
+      api_base: http://ollama.10.0.40.51.sslip.io/
+      extra_headers:
+      "Authorization": "ollama:password"
