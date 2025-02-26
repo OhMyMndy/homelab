@@ -1,0 +1,52 @@
+services:
+  nexus:
+    image: sonatype/nexus3:3.77.2
+    volumes:
+      - ./storage/nexus:/nexus-data
+    restart: unless-stopped
+    container_name: nexus
+    cpus: 1
+    mem_limit: 4000m
+    # ports:
+    #   - 9902:9902
+    #   - 9903:9903
+    #   - 9904:9904
+    #   - 9905:9905
+    networks:
+      - default
+      - reverse-proxy
+      - lldap
+      - smtprelay
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.nexus.rule=Host(`nexus.home.ohmymndy.com`)"
+      - "traefik.http.routers.nexus.tls=true"
+      - "traefik.enable=true"
+
+  nexus-dockerhub:
+    image: nginx
+    restart: unless-stopped
+    container_name: nexus-dockerhub
+    init: true
+    networks:
+      - default
+      - reverse-proxy
+    volumes:
+      - ./nexus-dockerhub.conf:/etc/nginx/conf.d/default.conf
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.dockerhub.tls=true"
+      - "traefik.http.routers.dockerhub.rule=Host(`dockerhub.nexus.home.ohmymndy.com`)"
+      - "traefik.enable=true"
+
+networks:
+  default:
+  reverse-proxy:
+    external: true
+    name: reverse-proxy
+  lldap:
+    name: lldap_default
+    external: true
+  smtprelay:
+    name: smtprelay
+    external: true
