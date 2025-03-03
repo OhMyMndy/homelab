@@ -1,0 +1,4 @@
+# TODO run on first control plane only and do for all nodes
+- name: Label node
+  command: kubectl label nodes "{{ item }}"
+  loop: "{{ node_labels }}"

@@ -1,0 +1,48 @@
+---
+- name: Dependencies
+  hosts: all
+  roles:
+    - role: geerlingguy.nfs
+      become: true
+  tasks:
+    - name: Disable swap
+      ansible.builtin.import_role:
+        name: swap
+
+#    - name: Configure hosts
+#      ansible.builtin.import_role:
+#        name: configure-hosts
+
+    - name: Install Kubernetes tools
+      ansible.builtin.import_role:
+        name: kubernetes
+        tasks_from: install-tools
+
+    - name: Install Kubernetes
+      #      when: inventory_hostname in (groups['control-plane'] | first)
+      become: true
+      ansible.builtin.import_role:
+        name: kubernetes
+        tasks_from: install
+
+    - name: Configure control plane
+      when: inventory_hostname in (groups['control-plane'] | first)
+      ansible.builtin.import_role:
+        name: kubernetes
+        tasks_from: init-control-plane
+#
+#    - name: Kubernetes join
+#      ansible.builtin.import_role:
+#        name: kubernetes
+#        tasks_from: join
+#
+    - name: Configure nodes
+      ansible.builtin.import_role:
+        name: kubernetes
+        tasks_from: configure
+
+    - name: Mark control plane as schedulable
+      when: inventory_hostname in (groups['control-plane'] | first)
+      shell: |
+        set -eu
+        kubectl taint nodes $(hostname) node-role.kubernetes.io/control-plane:NoSchedule- || true

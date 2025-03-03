@@ -1,0 +1,71 @@
+- name: Install helm if not exists
+  become: true
+  unarchive:
+    src: https://get.helm.sh/helm-v{{ helm_version }}-linux-amd64.tar.gz
+    dest: /usr/local/bin
+    extra_opts: "--strip-components=1"
+    owner: root
+    group: root
+    mode: 0755
+    remote_src: true
+  args:
+    creates: /usr/local/bin/helm
+
+- name: Install Arkade
+  become: true
+  shell: |
+    if [ ! -f /usr/local/bin/arkade ]; then
+      curl -sLS https://get.arkade.dev | sh
+    fi
+
+
+- name: Add arkade to path in /etc/profile.d/arkade.sh (recommended for system-wide and all users)
+  become: true
+  blockinfile:
+    path: "{{ item }}"
+    create: true
+    insertbefore: BOF
+    block: |
+      if [ -d "$HOME/.arkade/bin" ]; then
+          PATH="$PATH:$HOME/.arkade/bin"
+      fi
+    marker: "# {mark} ANSIBLE MANAGED ARKADE PATH"
+  loop:
+    - /etc/profile.d/arkade.sh
+    - /home/mandy/.bashrc
+
+- name: Install tools with Arkade
+  shell: |
+    pkgs="argocd flux krew helm cilium hubble trivy jq yq kubectx kubens k9s kustomize helmfile"
+    for pkg in $pkgs; do
+      if [ ! -f ~/.arkade/bin/"$pkg" ]; then
+        arkade get $pkg --quiet
+      fi
+    done
+    
+    if ! ~/.arkade/bin/helm plugin list | tail -n +2 | cut -f1 | grep -q helm-git; then
+      ~/.arkade/bin/helm plugin install https://github.com/aslafy-z/helm-git --version 1.3.0
+    fi
+    pkgs="envsubst cert-manager graph kubescape kyverno"
+    for pkg in $pkgs; do
+      ~/.arkade/bin/krew install "$pkg" >/dev/null
+    done
+
+- name: Add kubectl completions
+  become: true
+  blockinfile:
+    path: /etc/bash_completion.d/kubernetes
+    create: true
+    marker: "# {mark} ANSIBLE MANAGED KUBERNETES"
+    block: |
+      if [ -n "${BASH_VERSION-}" ] ; then
+        if command -v helm &>/dev/null; then
+          source <(helm completion bash)
+        fi
+        
+        if command -v kubectl &>/dev/null; then
+          source <(kubectl completion bash)
+          alias k=kubectl
+          complete -F __start_kubectl k
+        fi
+      fi

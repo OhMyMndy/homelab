@@ -1,0 +1,98 @@
+# TODO: set node_labels
+
+- name: Kubeadm init
+  become: true
+  shell: |
+    set -eu
+    if [ ! -d /var/lib/etcd ]; then
+
+      kubeadm config images pull
+    
+      kubeadm init --kubernetes-version="{{ kubernetes_major_version }}.{{ kubernetes_minor_version }}"\
+          --pod-network-cidr="{{ pod_network_cidr }}" \
+          --service-cidr="{{ service_cidr }}" \
+          --control-plane-endpoint="{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}" \
+          --apiserver-advertise-address="{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}" \
+          --skip-phases=addon/kube-proxy
+    fi
+
+- name: Get kubeconfig
+  shell: |
+    set -eu
+    mkdir -p "$HOME/.kube"
+    sudo cp /etc/kubernetes/admin.conf "$HOME/.kube/config"
+    sudo chown -R $(id -u):$(id -g) "$HOME/.kube"
+
+- name: Add Cilium chart repo
+  kubernetes.core.helm_repository:
+    name: cilium
+    repo_url: "https://helm.cilium.io/"
+
+
+- name: Install Cilium
+  kubernetes.core.helm:
+    name: cilium
+    chart_ref: cilium/cilium
+    release_namespace: kube-system
+    chart_version: 1.17.1
+    wait: true
+    values:
+      egressGateway:
+        enabled: true
+      bpf:
+        masquerade: true
+      kubeProxyReplacement: true
+      k8sServiceHost: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+      k8sServicePort: 6443
+      operator:
+        replicas: 1
+
+- name: Install Flux
+  kubernetes.core.helm:
+    name: flux
+    chart_ref: oci://ghcr.io/fluxcd-community/charts/flux2
+    release_namespace: flux-system
+    create_namespace: true
+    #        chart_version: 1.17.1
+    wait: true
+#    values: []
+
+- name: Set up Flux
+  when: inventory_hostname in (groups['control-plane'] | first)
+  shell: |
+    set -eux
+    
+    flux create source git homelab \
+      --url=https://github.com/ohmymndy/homelab \
+      --branch=main
+    
+    
+    flux create kustomization homelab \
+      --source=GitRepository/homelab \
+      --path="./kubernetes/flux" \
+      --prune=true \
+      --interval=60m \
+      --wait=true \
+      --health-check-timeout=3m
+  args:
+    executable: /bin/bash
+  timeout: 30
+    
+    
+- name: Add nfs-subdir-external-provisioner chart repo
+  kubernetes.core.helm_repository:
+    name: nfs-subdir-external-provisioner
+    repo_url: "https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner"
+
+
+- name: Install nfs-subdir-external-provisioner
+  kubernetes.core.helm:
+    name: nfs-subdir-external-provisioner
+    chart_ref: nfs-subdir-external-provisioner/nfs-subdir-external-provisioner
+#    release_namespace: kube-system
+#    chart_version: 1.17.1
+    wait: true
+    values:
+      nfs:
+        server: 10.0.40.65
+        path: /mnt/kubernetes

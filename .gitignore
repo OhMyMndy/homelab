@@ -17,3 +17,13 @@ __pycache__
 *.tfvars
 .bw-token
 *-bak
+
+
+terraform.tfvars
+.terraform
+.terraform.lock.hcl
+terraform.tfstate*
+tmp/
+ansible-inventory.yml
+
+*.bak

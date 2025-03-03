@@ -1,0 +1,7 @@
+kubernetes_major_version: 1.31
+kubernetes_minor_version: 6
+pod_network_cidr: 10.244.0.0/16
+service_cidr: 10.96.0.0/12
+
+node_labels: []
+helm_version: 3.17.1
