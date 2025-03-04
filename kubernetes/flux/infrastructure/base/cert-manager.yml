@@ -25,7 +25,7 @@ spec:
       reconcileStrategy: ChartVersion
       sourceRef:
         kind: HelmRepository
-        name: cert-manager
+        name: jetstack
       version: v1.17.0
   interval: 1h
   values:
