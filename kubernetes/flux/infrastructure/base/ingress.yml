@@ -36,3 +36,5 @@ spec:
 
       config:
         force-ssl-redirect: "true"
+      service:
+        type: NodePort
