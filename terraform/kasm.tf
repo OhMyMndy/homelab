@@ -1,20 +1,10 @@
-resource "proxmox_virtual_environment_vm" "ubuntu_24_04" {
-  for_each = {
-    "kubernetes-1" = {
-      vm_id = 401,
-      ip_address = "10.0.40.81/24"
-    },
-    "kubernetes-2" = {
-      vm_id = 402,
-      ip_address = "10.0.40.82/24"
-    }
-  }
-  name        = "kubernetes-1"
+resource "proxmox_virtual_environment_vm" "kasm" {
+  name        = "kasm-1"
   description = "Managed by Terraform"
-  tags = ["terraform", "ubuntu", "kubernetes"]
+  tags = ["terraform", "ubuntu", "kasm"]
 
 
-  vm_id = each.value.vm_id
+  vm_id = 500
 
   node_name = local.node_name
 
@@ -35,7 +25,7 @@ resource "proxmox_virtual_environment_vm" "ubuntu_24_04" {
     # }
     ip_config {
       ipv4 {
-        address = each.value.ip_address
+        address = "10.0.40.30/24"
         gateway = "10.0.40.1"
       }
     }
@@ -44,17 +34,17 @@ resource "proxmox_virtual_environment_vm" "ubuntu_24_04" {
       servers = ["10.0.40.4", "10.0.40.1"]
       domain = "home.mndy.be"
     }
-    user_data_file_id = proxmox_virtual_environment_file.kubernetes_user_data.id
+    user_data_file_id = proxmox_virtual_environment_file.kasm_user_data.id
   }
 
   cpu {
     type    = "EPYC-IBPB"
     sockets = 1
-    cores   = 4
+    cores   = 3
   }
 
   memory {
-    dedicated = 20000
+    dedicated = 8000
   }
   started         = true
   on_boot         = true
@@ -80,9 +70,7 @@ resource "proxmox_virtual_environment_vm" "ubuntu_24_04" {
 
 }
 
-
-
-resource "proxmox_virtual_environment_file" "kubernetes_user_data" {
+resource "proxmox_virtual_environment_file" "kasm_user_data" {
   content_type = "snippets"
   datastore_id = "shared-nfs"
   node_name    = local.node_name
@@ -91,7 +79,7 @@ resource "proxmox_virtual_environment_file" "kubernetes_user_data" {
   source_raw {
     data = <<-EOF
     #cloud-config
-    hostname: kubernetes-1
+    hostname: kasm-1
     users:
       - name: mandy
         groups:
@@ -106,9 +94,18 @@ resource "proxmox_virtual_environment_file" "kubernetes_user_data" {
         - timedatectl set-timezone Europe/Brussels
         - systemctl enable qemu-guest-agent
         - systemctl start qemu-guest-agent
+        - mkdir -p /etc/docker
+        - |
+            echo '{ "registry-mirrors": ["https://oci.nexus.home.ohmymndy.com"] }' >/etc/docker/daemon.json
+        - mkdir -p /tmp
+        - cd /tmp
+        - curl -O https://kasm-static-content.s3.amazonaws.com/kasm_release_1.16.1.98d6fa.tar.gz
+        - tar -xf kasm_release_1.16.1.98d6fa.tar.gz
+        - bash kasm_release/install.sh --no-check-disk --no-check-ports --accept-eula --swap-size 6000
+        - rm -rf kasm*
         - echo "done" > /tmp/cloud-config.done
     EOF
 
-    file_name = "user-data-cloud-config.yaml"
+    file_name = "kasm-user-data-cloud-config.yaml"
   }
 }

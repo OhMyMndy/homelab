@@ -1,3 +1,8 @@
+locals {
+  node_name    = "pve-2"
+  datastore_id = "local-zfs"
+}
+
 provider "proxmox" {
   endpoint = var.proxmox_endpoint
   insecure = true
@@ -7,4 +12,8 @@ provider "proxmox" {
     agent = true
     username = var.proxmox_username
   }
+}
+
+data "local_file" "ssh_public_key" {
+  filename = "/home/mandy/.ssh/id_ed25519.pub"
 }
