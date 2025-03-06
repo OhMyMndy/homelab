@@ -44,7 +44,7 @@ resource "proxmox_virtual_environment_vm" "kasm" {
   }
 
   memory {
-    dedicated = 8000
+    dedicated = 17000
   }
   started         = true
   on_boot         = true
@@ -64,7 +64,8 @@ resource "proxmox_virtual_environment_vm" "kasm" {
   lifecycle {
     ignore_changes = [
       started,
-      disk[0].file_id
+      disk[0].file_id,
+      initialization[0].user_data_file_id
     ]
   }
 
@@ -90,10 +91,16 @@ resource "proxmox_virtual_environment_file" "kasm_user_data" {
         sudo: ALL=(ALL) NOPASSWD:ALL
     runcmd:
         - apt update
-        - apt install -y qemu-guest-agent net-tools
+        - apt-get install -y qemu-guest-agent net-tools
         - timedatectl set-timezone Europe/Brussels
         - systemctl enable qemu-guest-agent
         - systemctl start qemu-guest-agent
+
+        # Necessary for Redroid for example
+        - apt-get install -y linux-modules-extra-`uname -r`
+        - echo 'binder_linux' > /etc/modules-load.d/binder_linux.conf
+        - echo 'options binder_linux devices=binder,hwbinder,vndbinder' > /etc/modprobe.d/binder_linux.conf
+
         - mkdir -p /etc/docker
         - |
             echo '{ "registry-mirrors": ["https://oci.nexus.home.ohmymndy.com"] }' >/etc/docker/daemon.json
