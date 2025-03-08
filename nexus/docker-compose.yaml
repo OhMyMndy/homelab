@@ -23,10 +23,10 @@ services:
       - "traefik.http.routers.nexus.tls=true"
       - "traefik.enable=true"
 
-  nexus-dockerhub:
+  nexus-proxy:
     image: nginx
     restart: unless-stopped
-    container_name: nexus-dockerhub
+    container_name: nexus-proxy
     init: true
     networks:
       - default
@@ -36,7 +36,7 @@ services:
     labels:
       - "traefik.docker.network=reverse-proxy"
       - "traefik.http.routers.dockerhub.tls=true"
-      - "traefik.http.routers.dockerhub.rule=Host(`dockerhub.nexus.home.ohmymndy.com`)"
+      - traefik.http.routers.dockerhub.rule=HostRegexp(`^.+\.nexus\.home\.ohmymndy\.com`)
       - "traefik.enable=true"
 
 networks:

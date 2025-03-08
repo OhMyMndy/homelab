@@ -26,7 +26,7 @@ touch /etc/apt/apt.conf.d/99verify-peer.conf \
 Using the Debian Bookworm apt proxy:
 
 ```bash
-cat <<EOF | tee /etc/apt/sources.list.d/ubuntu.sources >/dev/null
+cat <<EOF | tee /etc/apt/sources.list.d/debian.sources >/dev/null
 Types: deb
 # http://snapshot.debian.org/archive/debian/20250224T000000Z
 URIs: https://nexus.home.ohmymndy.com/repository/debian-bookworm/
