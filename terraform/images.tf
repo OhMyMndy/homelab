@@ -6,3 +6,12 @@ resource "proxmox_virtual_environment_download_file" "ubuntu_24_04" {
   overwrite           = false
   overwrite_unmanaged = true
 }
+
+resource "proxmox_virtual_environment_download_file" "ubuntu_24_04_desktop" {
+  content_type        = "iso"
+  datastore_id        = "local"
+  node_name           = "pve-2"
+  url                 = "https://releases.ubuntu.com/noble/ubuntu-24.04.2-desktop-amd64.iso"
+  overwrite           = true
+  overwrite_unmanaged = true
+}

@@ -1,20 +1,10 @@
-resource "proxmox_virtual_environment_vm" "ubuntu_24_04" {
-  for_each = {
-    "kubernetes-1" = {
-      vm_id      = 401,
-      ip_address = "10.0.40.81/24"
-    },
-    "kubernetes-2" = {
-      vm_id      = 402,
-      ip_address = "10.0.40.82/24"
-    }
-  }
-  name        = "kubernetes-1"
+resource "proxmox_virtual_environment_vm" "tailscale-subnet-router" {
+  name        = "tailscale-subnet-router"
   description = "Managed by Terraform"
-  tags        = ["terraform", "ubuntu", "kubernetes"]
+  tags        = ["terraform", "ubuntu", "tailscale"]
 
 
-  vm_id = each.value.vm_id
+  vm_id = 600
 
   node_name = local.node_name
 
@@ -28,33 +18,34 @@ resource "proxmox_virtual_environment_vm" "ubuntu_24_04" {
 
   initialization {
     datastore_id = local.datastore_id
-    # ip_config {
-    #   ipv4 {
-    #     address = "dhcp"
-    #   }
-    # }
     ip_config {
       ipv4 {
-        address = each.value.ip_address
-        gateway = "10.0.40.1"
+        address = "dhcp"
       }
     }
+    # ip_config {
+    #   ipv4 {
+    #     address = "10.0.40.30/24"
+    #     gateway = "10.0.40.1"
+    #   }
+    # }
 
-    dns {
-      servers = ["10.0.40.4", "10.0.40.1"]
-      domain  = "home.mndy.be"
-    }
-    user_data_file_id = proxmox_virtual_environment_file.kubernetes_user_data.id
+    # dns {
+    #   servers = ["10.0.40.4", "10.0.40.1"]
+    #   domain = "home.mndy.be"
+    # }
+    user_data_file_id = proxmox_virtual_environment_file.tailscale-subnet-router.id
   }
 
   cpu {
     type    = "EPYC-IBPB"
     sockets = 1
-    cores   = 4
+    cores   = 1
+    limit   = 64
   }
 
   memory {
-    dedicated = 20000
+    dedicated = 512
   }
   started         = true
   on_boot         = true
@@ -65,7 +56,7 @@ resource "proxmox_virtual_environment_vm" "ubuntu_24_04" {
     file_id      = proxmox_virtual_environment_download_file.ubuntu_24_04.id
     interface    = "virtio0"
     file_format  = "raw"
-    size         = 200
+    size         = 30
   }
   network_device {
     bridge = "vmbr0"
@@ -74,24 +65,23 @@ resource "proxmox_virtual_environment_vm" "ubuntu_24_04" {
   lifecycle {
     ignore_changes = [
       started,
-      disk[0].file_id
+      disk[0].file_id,
+      initialization[0].user_data_file_id
     ]
   }
 
 }
 
-
-
-resource "proxmox_virtual_environment_file" "kubernetes_user_data" {
+resource "proxmox_virtual_environment_file" "tailscale-subnet-router" {
   content_type = "snippets"
   datastore_id = "shared-nfs"
   node_name    = local.node_name
   overwrite    = true
 
   source_raw {
-    data = <<-EOF
+    data      = <<-EOF
     #cloud-config
-    hostname: kubernetes-1
+    hostname: tailscale-subnet-router
     users:
       - name: mandy
         groups:
@@ -102,13 +92,19 @@ resource "proxmox_virtual_environment_file" "kubernetes_user_data" {
         sudo: ALL=(ALL) NOPASSWD:ALL
     runcmd:
         - apt update
-        - apt install -y qemu-guest-agent net-tools
+        - apt-get install -y qemu-guest-agent net-tools
         - timedatectl set-timezone Europe/Brussels
         - systemctl enable qemu-guest-agent
         - systemctl start qemu-guest-agent
+
+        - curl -fsSL https://tailscale.com/install.sh | sh
+        - echo "net.ipv4.ip_forward = 1" > /etc/sysctl.d/tailscale.conf
+        - sysctl --system
+
+        - tailscale up --auth-key "${var.tailscale_auth_key}" --accept-routes --advertise-routes 10.0.40.0/24 --advertise-exit-node
         - echo "done" > /tmp/cloud-config.done
     EOF
+    file_name = "tailscale-subnet-router-cloud-config.yaml"
 
-    file_name = "user-data-cloud-config.yaml"
   }
 }

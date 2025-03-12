@@ -1,6 +1,7 @@
 locals {
-  node_name    = "pve-2"
-  datastore_id = "local-zfs"
+  node_name             = "pve-2"
+  datastore_id          = "local-zfs"
+  snippets_datastore_id = "shared-nfs"
 }
 
 provider "proxmox" {
@@ -9,7 +10,7 @@ provider "proxmox" {
   # username = var.proxmox_username
   api_token = var.proxmox_api_token
   ssh {
-    agent = true
+    agent    = true
     username = var.proxmox_username
   }
 }

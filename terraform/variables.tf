@@ -7,6 +7,22 @@ variable "proxmox_username" {
 }
 
 variable "proxmox_api_token" {
-  type = string
+  type      = string
   sensitive = true
 }
+
+variable "tailscale_auth_key" {
+  type      = string
+  sensitive = true
+}
+
+variable "kasm_user_password" {
+  type      = string
+  sensitive = true
+}
+
+variable "kasm_admin_password" {
+  type      = string
+  sensitive = true
+}
+
