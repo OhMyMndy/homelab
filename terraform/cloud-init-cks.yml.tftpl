@@ -35,9 +35,9 @@ runcmd:
     EOF
   - sysctl --system >/dev/null
 
-  - arkade system install containerd
+
   - apt-get update
-  - apt-get install -y runc
+  - apt-get install -y containerd runc
 
   - arkade get helm --path /tmp
   - install -m 755 /tmp/helm /usr/local/bin/helm
@@ -54,6 +54,19 @@ runcmd:
   - mkdir -p /etc/containerd
   - containerd config default | tee /etc/containerd/config.toml >/dev/null
   - sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+  - |
+    cat <<EOF | tee -a /etc/containerd/config.toml
+    [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runsc]
+      runtime_type = "io.containerd.runsc.v1"
+    EOF
+
+  - apt-get install -y apt-transport-https ca-certificates curl gnupg
+  - curl -fsSL https://gvisor.dev/archive.key | sudo gpg --dearmor -o /usr/share/keyrings/gvisor-archive-keyring.gpg
+  - echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/gvisor-archive-keyring.gpg] https://storage.googleapis.com/gvisor/releases release main" | sudo tee /etc/apt/sources.list.d/gvisor.list > /dev/null
+  - apt-get update
+  - apt-get install -y runsc
+
+
   - systemctl restart containerd
 
   - apt-get install -y apt-transport-https ca-certificates curl gpg
@@ -87,6 +100,27 @@ runcmd:
       --namespace kube-system \
       --set operator.replicas=2
 
+  - |
+      cat <<EOF | kubectl apply -f -
+      apiVersion: node.k8s.io/v1
+      kind: RuntimeClass
+      metadata:
+        name: gvisor
+      handler: runsc
+      EOF
+
+
+  #- cat <<EOF | kubectl apply -f -
+  #  apiVersion: v1
+  #  kind: Pod
+  #  metadata:
+  #    name: nginx-gvisor
+  #  spec:
+  #    runtimeClassName: gvisor
+  #    containers:
+  #    - name: nginx
+  #      image: nginx
+  #  EOF
   - helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
   - |
     helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
@@ -106,7 +140,7 @@ runcmd:
   # - kubectl apply -n gatekeeper-system -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper-library/refs/heads/master/library/general/replicalimits/template.yaml
 
 
-  - export IP_ADDRESS="$(ip route | awk '($1 == "default") {print $9}')"
+  - export IP_ADDRESS="$(ip route get 1.1.1.1 | head -1 | awk '{print $7}')"
 
   - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
   - |

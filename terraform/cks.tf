@@ -9,7 +9,7 @@ module "cks" {
   node_name             = local.node_name
   datastore_id          = local.datastore_id
   snippets_datastore_id = local.snippets_datastore_id
-  ip_address            = null
+  ip_address            = "10.0.40.77/24"
   cores                 = 3
   memory                = 17000
   on_boot               = true
