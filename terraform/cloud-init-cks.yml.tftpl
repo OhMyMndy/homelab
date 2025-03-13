@@ -37,7 +37,7 @@ runcmd:
 
 
   - apt-get update
-  - apt-get install -y containerd runc
+  - apt-get install -y containerd runc linux-kvm
 
   - arkade get helm --path /tmp
   - install -m 755 /tmp/helm /usr/local/bin/helm
@@ -109,6 +109,9 @@ runcmd:
       handler: runsc
       EOF
 
+  - bash -c "$(curl -fsSL https://raw.githubusercontent.com/kata-containers/kata-containers/main/utils/kata-manager.sh) -o"
+
+  - kubectl apply -f https://raw.githubusercontent.com/kata-containers/kata-containers/main/tools/packaging/kata-deploy/runtimeclasses/kata-runtimeClasses.yaml
 
   #- cat <<EOF | kubectl apply -f -
   #  apiVersion: v1
@@ -121,6 +124,10 @@ runcmd:
   #    - name: nginx
   #      image: nginx
   #  EOF
+
+  - kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.31/deploy/local-path-storage.yaml
+  - kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+
   - helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
   - |
     helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
@@ -135,19 +142,149 @@ runcmd:
   - helm upgrade --install gatekeeper gatekeeper/gatekeeper --namespace gatekeeper-system --create-namespace
 
   - kubectl apply -n gatekeeper-system -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper-library/refs/heads/master/library/general/disallowedtags/template.yaml
-  - kubectl apply -n gatekeeper-system -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper-library/refs/heads/master/library/general/disallowedtags/samples/container-image-must-not-have-latest-tag/constraint.yaml
+  #- kubectl apply -n gatekeeper-system -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper-library/refs/heads/master/library/general/disallowedtags/samples/container-image-must-not-have-latest-tag/constraint.yaml
 
   # - kubectl apply -n gatekeeper-system -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper-library/refs/heads/master/library/general/replicalimits/template.yaml
 
 
   - export IP_ADDRESS="$(ip route get 1.1.1.1 | head -1 | awk '{print $7}')"
 
+  - helm repo add grafana https://grafana.github.io/helm-charts
+
+  - |
+    cat <<EOF | tee /tmp/kube-prom-stack.yml >/dev/null
+    alertmanager:
+      ingress:
+        enabled: true
+        ingressClassName: nginx
+        hosts:
+          - alertmanager.$IP_ADDRESS.sslip.io
+
+    grafana:
+      ingress:
+        enabled: true
+        ingressClassName: nginx
+        hosts:
+          - grafana.$IP_ADDRESS.sslip.io
+      additionalDataSources:
+        - name: Loki
+          uid: loki
+          type: loki
+          orgId: 1
+          jsonData:
+            httpHeaderName1: 'X-Scope-OrgID'
+          secureJsonData:
+            httpHeaderValue1: 1
+          url: http://loki-gateway
+          isDefault: false
+          editable: true
+        # https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/#provision-the-data-source
+        - name: Tempo
+          uid: tempo
+          type: tempo
+          editable: false
+          url: http://tempo-tempo-query-frontend:3100
+          isDefault: false
+          jsonData:
+            tracesToLogsV2:
+              datasourceUid: loki
+            lokiSearch:
+              datasourceUid: loki
+            tracesToMetrics:
+              datasourceUid: prom
+            serviceMap:
+              datasourceUid: prom
+    EOF
+
   - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
   - |
     helm upgrade --install --create-namespace -n monitoring kube-prometheus-stack prometheus-community/kube-prometheus-stack \
-        --set alertmanager.ingress.enabled=true --set alertmanager.ingress.ingressClassName=nginx \
-        --set alertmanager.ingress.hosts[0]=alertmanager.$IP_ADDRESS.sslip.io \
-        --set grafana.ingress.enabled=true --set grafana.ingress.ingressClassName=nginx  \
-        --set grafana.ingress.hosts[0]=grafana.$IP_ADDRESS.sslip.io
+        -f /tmp/kube-prom-stack.yml
+
+  - |
+    cat <<EOF | tee /tmp/alloy.yml >/dev/null
+    alloy:
+      configMap:
+        content: |-
+          logging {
+            level = "info"
+            format = "logfmt"
+          }
+          discovery.kubernetes "pods" {
+            namespaces {
+              own_namespace = false
+            }
+            role = "pod"
+            selectors {
+              role = "pod"
+              field = "spec.nodeName=" + coalesce(env("HOSTNAME"), constants.hostname)
+            }
+          }
+          loki.source.kubernetes "pods" {
+            targets    = discovery.relabel.pods.output
+            forward_to = [loki.write.local.receiver]
+          }
+          loki.write "local" {
+            endpoint {
+              url = "http://loki-gateway.loki.svc.cluster.local/loki/api/v1/push"
+              headers = {
+                "X-Scope-OrgID" = "1",
+              }
+            }
+          }
+    ingress:
+      enabled: true
+      hosts:
+        - alloy.$IP_ADDRESS.sslip.io
+    EOF
+
+  - helm upgrade --install --namespace monitoring alloy grafana/alloy -f /tmp/alloy.yml
+
+  - |
+    cat <<EOF | tee /tmp/loki-values.yml >/dev/null
+    minio:
+      enabled: true
+
+    deploymentMode: SingleBinary
+
+    singleBinary:
+      replicas: 1
+
+    # Zero out replica counts of other deployment modes
+    backend:
+      replicas: 0
+    read:
+      replicas: 0
+    write:
+      replicas: 0
+
+    ingester:
+      replicas: 0
+    querier:
+      replicas: 0
+    queryFrontend:
+      replicas: 0
+    queryScheduler:
+      replicas: 0
+    distributor:
+      replicas: 0
+    compactor:
+      replicas: 0
+    indexGateway:
+      replicas: 0
+    bloomCompactor:
+      replicas: 0
+    bloomGateway:
+      replicas: 0
+    EOF
+  - helm repo add grafana https://grafana.github.io/helm-charts
+
+  # Disable multi tenancy
+  - helm upgrade --install loki grafana/loki -n monitoring --create-namespace -f /tmp/loki-values.yml
+
+  #- helm repo add grafana https://grafana.github.io/helm-charts
+  #- helm upgrade --install lgtm grafana/lgtm-distributed -n observability --create-namespace --version 2.1.0 \
+  #  --set grafana.ingress.enabled=true --set grafana.ingress.ingressClassName=nginx  \
+  #  --set grafana.ingress.hosts[0]=grafana.$IP_ADDRESS.sslip.io
 
   - echo "done" > /tmp/cloud-config.done

@@ -11,6 +11,7 @@ module "cks" {
   snippets_datastore_id = local.snippets_datastore_id
   ip_address            = "10.0.40.77/24"
   cores                 = 3
+  cpu_type              = "host"
   memory                = 17000
   on_boot               = true
   disk_size             = 60

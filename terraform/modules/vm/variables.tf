@@ -58,3 +58,7 @@ variable "ip_address" {
     error_message = "Should be an IP address '0.0.0.0/0'"
   }
 }
+
+variable "cpu_type" {
+  default = "EPYC-IBPB"
+}

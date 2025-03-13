@@ -20,10 +20,9 @@ __pycache__
 
 
 terraform.tfvars
-.terraform
 .terraform.lock.hcl
 terraform.tfstate*
 tmp/
 ansible-inventory.yml
-
+*.plan
 *.bak

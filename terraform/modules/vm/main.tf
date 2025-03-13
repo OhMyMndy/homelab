@@ -9,6 +9,7 @@ terraform {
   }
 }
 
+
 resource "proxmox_virtual_environment_vm" "this" {
   name        = var.hostname
   description = "Managed by Terraform"
@@ -64,7 +65,7 @@ resource "proxmox_virtual_environment_vm" "this" {
   }
 
   cpu {
-    type    = "EPYC-IBPB"
+    type    = var.cpu_type
     sockets = 1
     cores   = var.cores
     limit   = var.cpu_limit
