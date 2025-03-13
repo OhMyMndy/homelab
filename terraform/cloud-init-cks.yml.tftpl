@@ -16,9 +16,8 @@ runcmd:
   - systemctl start qemu-guest-agent
 
   - curl -sLS https://get.arkade.dev | sh
-  - echo 'export PATH=$PATH:$HOME/.arkade/bin/' >> ~${user}/.bashrc
+  - echo 'export PATH=${"$"}PATH:${"$"}HOME/.arkade/bin/' >> ~${user}/.bashrc
   - chown ${user}:${user} ~${user}/.bashrc
-
   - swapoff -a
   - |
     cat <<EOF | tee /etc/modules-load.d/k8s.conf >/dev/null
@@ -62,7 +61,7 @@ runcmd:
 
   - apt-get install -y apt-transport-https ca-certificates curl gnupg
   - curl -fsSL https://gvisor.dev/archive.key | sudo gpg --dearmor -o /usr/share/keyrings/gvisor-archive-keyring.gpg
-  - echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/gvisor-archive-keyring.gpg] https://storage.googleapis.com/gvisor/releases release main" | sudo tee /etc/apt/sources.list.d/gvisor.list > /dev/null
+  - echo "deb [arch=${"$"}(dpkg --print-architecture) signed-by=/usr/share/keyrings/gvisor-archive-keyring.gpg] https://storage.googleapis.com/gvisor/releases release main" | sudo tee /etc/apt/sources.list.d/gvisor.list > /dev/null
   - apt-get update
   - apt-get install -y runsc
 
@@ -91,7 +90,7 @@ runcmd:
 
   - export KUBECONFIG=/etc/kubernetes/admin.conf
 
-  - kubectl taint nodes $(hostname) node-role.kubernetes.io/control-plane:NoSchedule-
+  - kubectl taint nodes ${"$"}(hostname) node-role.kubernetes.io/control-plane:NoSchedule-
 
   - helm repo add cilium https://helm.cilium.io/
   - |
@@ -109,7 +108,7 @@ runcmd:
       handler: runsc
       EOF
 
-  - bash -c "$(curl -fsSL https://raw.githubusercontent.com/kata-containers/kata-containers/main/utils/kata-manager.sh) -o"
+  - bash -c "${"$"}(curl -fsSL https://raw.githubusercontent.com/kata-containers/kata-containers/main/utils/kata-manager.sh) -o"
 
   - kubectl apply -f https://raw.githubusercontent.com/kata-containers/kata-containers/main/tools/packaging/kata-deploy/runtimeclasses/kata-runtimeClasses.yaml
 
@@ -126,7 +125,8 @@ runcmd:
   #  EOF
 
   - kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.31/deploy/local-path-storage.yaml
-  - kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+  - |
+    kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 
   - helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
   - |
@@ -139,7 +139,9 @@ runcmd:
         --set controller.ingressClassResource.default=true
 
   - helm repo add gatekeeper https://open-policy-agent.github.io/gatekeeper/charts
-  - helm upgrade --install gatekeeper gatekeeper/gatekeeper --namespace gatekeeper-system --create-namespace
+  - |
+    helm upgrade --install gatekeeper gatekeeper/gatekeeper --namespace gatekeeper-system --create-namespace \
+      --version 3.18.2
 
   - kubectl apply -n gatekeeper-system -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper-library/refs/heads/master/library/general/disallowedtags/template.yaml
   #- kubectl apply -n gatekeeper-system -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper-library/refs/heads/master/library/general/disallowedtags/samples/container-image-must-not-have-latest-tag/constraint.yaml
@@ -147,101 +149,87 @@ runcmd:
   # - kubectl apply -n gatekeeper-system -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper-library/refs/heads/master/library/general/replicalimits/template.yaml
 
 
-  - export IP_ADDRESS="$(ip route get 1.1.1.1 | head -1 | awk '{print $7}')"
+  - helm repo add stakater https://stakater.github.io/stakater-charts
+  - |
+    helm upgrade --install reloader stakater/reloader --set reloader.autoReloadAll=true \
+      --namespace reloader --create-namespace --version 2.0.0
+
+
+  - export IP_ADDRESS="${"$"}(ip route get 1.1.1.1 | head -1 | awk '{print ${"$"}7}')"
 
   - helm repo add grafana https://grafana.github.io/helm-charts
 
   - |
-    cat <<EOF | tee /tmp/kube-prom-stack.yml >/dev/null
-    alertmanager:
-      ingress:
-        enabled: true
-        ingressClassName: nginx
-        hosts:
-          - alertmanager.$IP_ADDRESS.sslip.io
+      cat <<EOF | tee /tmp/kube-prom-stack.yml >/dev/null
+      alertmanager:
+        ingress:
+          enabled: true
+          ingressClassName: nginx
+          hosts:
+            - alertmanager.${"$"}IP_ADDRESS.sslip.io
 
-    grafana:
-      ingress:
-        enabled: true
-        ingressClassName: nginx
-        hosts:
-          - grafana.$IP_ADDRESS.sslip.io
-      additionalDataSources:
-        - name: Loki
-          uid: loki
-          type: loki
-          orgId: 1
-          jsonData:
-            httpHeaderName1: 'X-Scope-OrgID'
-          secureJsonData:
-            httpHeaderValue1: 1
-          url: http://loki-gateway
-          isDefault: false
-          editable: true
-        # https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/#provision-the-data-source
-        - name: Tempo
-          uid: tempo
-          type: tempo
-          editable: false
-          url: http://tempo-tempo-query-frontend:3100
-          isDefault: false
-          jsonData:
-            tracesToLogsV2:
-              datasourceUid: loki
-            lokiSearch:
-              datasourceUid: loki
-            tracesToMetrics:
-              datasourceUid: prom
-            serviceMap:
-              datasourceUid: prom
-    EOF
-
+      grafana:
+        ingress:
+          enabled: true
+          ingressClassName: nginx
+          hosts:
+            - grafana.${"$"}IP_ADDRESS.sslip.io
+        additionalDataSources:
+          - name: Loki
+            uid: loki
+            type: loki
+            orgId: 1
+            jsonData:
+              httpHeaderName1: "X-Scope-OrgID"
+            secureJsonData:
+              httpHeaderValue1: 1
+            url: http://loki-gateway
+            isDefault: false
+            editable: true
+          # https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/#provision-the-data-source
+          - name: Tempo
+            uid: tempo
+            type: tempo
+            editable: false
+            url: http://tempo-tempo-query-frontend:3100
+            isDefault: false
+            jsonData:
+              tracesToLogsV2:
+                datasourceUid: loki
+              lokiSearch:
+                datasourceUid: loki
+              tracesToMetrics:
+                datasourceUid: prom
+              serviceMap:
+                datasourceUid: prom
+      EOF
   - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
   - |
     helm upgrade --install --create-namespace -n monitoring kube-prometheus-stack prometheus-community/kube-prometheus-stack \
-        -f /tmp/kube-prom-stack.yml
-
-  - |
-    cat <<EOF | tee /tmp/alloy.yml >/dev/null
-    alloy:
-      configMap:
-        content: |-
-          logging {
-            level = "info"
-            format = "logfmt"
-          }
-          discovery.kubernetes "pods" {
-            namespaces {
-              own_namespace = false
-            }
-            role = "pod"
-            selectors {
-              role = "pod"
-              field = "spec.nodeName=" + coalesce(env("HOSTNAME"), constants.hostname)
-            }
-          }
-          loki.source.kubernetes "pods" {
-            targets    = discovery.relabel.pods.output
-            forward_to = [loki.write.local.receiver]
-          }
-          loki.write "local" {
-            endpoint {
-              url = "http://loki-gateway.loki.svc.cluster.local/loki/api/v1/push"
-              headers = {
-                "X-Scope-OrgID" = "1",
-              }
-            }
-          }
-    ingress:
-      enabled: true
-      hosts:
-        - alloy.$IP_ADDRESS.sslip.io
-    EOF
-
-  - helm upgrade --install --namespace monitoring alloy grafana/alloy -f /tmp/alloy.yml
+        --version 69.8.2 -f /tmp/kube-prom-stack.yml
 
   - |
     cat <<EOF | tee /tmp/loki-values.yml >/dev/null
+    loki:
+      commonConfig:
+        replication_factor: 1
+      schemaConfig:
+        configs:
+          - from: "2024-04-01"
+            store: tsdb
+            object_store: s3
+            schema: v13
+            index:
+              prefix: loki_index_
+              period: 24h
+      pattern_ingester:
+          enabled: true
+      limits_config:
+        allow_structured_metadata: true
+        volume_enabled: true
+      ruler:
+        enable_api: true
+
     minio:
       enabled: true
 
@@ -277,14 +265,26 @@ runcmd:
     bloomGateway:
       replicas: 0
     EOF
+
+
+
   - helm repo add grafana https://grafana.github.io/helm-charts
 
-  # Disable multi tenancy
-  - helm upgrade --install loki grafana/loki -n monitoring --create-namespace -f /tmp/loki-values.yml
+  # TODO: Disable multi tenancy
+  - helm upgrade --install loki grafana/loki -n monitoring --create-namespace --version 6.28.0 -f /tmp/loki-values.yml
 
-  #- helm repo add grafana https://grafana.github.io/helm-charts
-  #- helm upgrade --install lgtm grafana/lgtm-distributed -n observability --create-namespace --version 2.1.0 \
-  #  --set grafana.ingress.enabled=true --set grafana.ingress.ingressClassName=nginx  \
-  #  --set grafana.ingress.hosts[0]=grafana.$IP_ADDRESS.sslip.io
+  - |
+    helm upgrade --install --namespace monitoring k8s-monitoring grafana/k8s-monitoring \
+    --version 2.0.16 \
+    --set cluster.name=cks \
+    --set alloy-singleton.enabled=true \
+    --set alloy-logs.enabled=true \
+    --set clusterEvents.enabled=true \
+    --set podLogs.enabled=true \
+    --set nodeLogs.enabled=true \
+    --set destinations[0].name=loki --set destinations[0].type=loki \
+    --set destinations[0].url=http://loki-gateway.monitoring.svc.cluster.local/loki/api/v1/push \
+    --set-json=destinations[0].extraHeaders='{"X-Scope-OrgID": 1}'
+
 
   - echo "done" > /tmp/cloud-config.done
