@@ -26,3 +26,7 @@ variable "kasm_admin_password" {
   sensitive = true
 }
 
+variable "kubernetes_token" {
+  type = string
+  sensitive = true
+}

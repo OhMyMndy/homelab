@@ -1,114 +1,52 @@
-resource "proxmox_virtual_environment_vm" "ubuntu_24_04" {
+# TODO create load balance VM with HAproxy
+
+
+module "k3s" {
+  source = "./modules/vm"
+
   for_each = {
     "kubernetes-1" = {
       vm_id      = 401,
-      ip_address = "10.0.40.81/24"
+      ip_address = "10.0.40.81",
+      k3s_type = "server",
+      k3s_args = "",
+      k3s_server = "10.0.40.81",
     },
     "kubernetes-2" = {
       vm_id      = 402,
-      ip_address = "10.0.40.82/24"
+      ip_address = "10.0.40.82"
+      k3s_type = "agent",
+      k3s_args = "--server https://10.0.40.81:6443",
+      k3s_server = "10.0.40.81",
     }
   }
-  name        = "kubernetes-1"
-  description = "Managed by Terraform"
-  tags        = ["terraform", "ubuntu", "kubernetes"]
 
+  hostname = each.key
+  tags     = ["terraform", "ubuntu", "k3s", "kubernetes"]
 
   vm_id = each.value.vm_id
 
-  node_name = local.node_name
+  node_name             = local.node_name
+  datastore_id          = local.datastore_id
+  snippets_datastore_id = local.snippets_datastore_id
+  ip_address            = "${each.value.ip_address}/24"
+  cores                 = 3
+  # cpu_type              = "host"
+  memory                = 8000
+  on_boot               = true
+  disk_size             = 120
 
-  operating_system {
-    type = "l26"
-  }
+  image = proxmox_virtual_environment_download_file.ubuntu_24_04.id
 
-  agent {
-    enabled = true
-  }
+  cloud_init = templatefile("./cloud-init-k3s-${each.value.k3s_type}.yml.tftpl", {
+    ssh_public_key: trimspace(data.local_file.ssh_public_key.content),
+    user = "mandy",
+    hostname = each.key
+    token = var.kubernetes_token,
+    ip_address = each.value.ip_address
+    k3s_type = each.value.k3s_type,
+    k3s_args = each.value.k3s_args,
+    k3s_server = each.value.k3s_server
+  })
 
-  initialization {
-    datastore_id = local.datastore_id
-    # ip_config {
-    #   ipv4 {
-    #     address = "dhcp"
-    #   }
-    # }
-    ip_config {
-      ipv4 {
-        address = each.value.ip_address
-        gateway = "10.0.40.1"
-      }
-    }
-
-    dns {
-      servers = ["10.0.40.4", "10.0.40.1"]
-      domain  = "home.mndy.be"
-    }
-    user_data_file_id = proxmox_virtual_environment_file.kubernetes_user_data.id
-  }
-
-  cpu {
-    type    = "EPYC-IBPB"
-    sockets = 1
-    cores   = 4
-  }
-
-  memory {
-    dedicated = 20000
-  }
-  started         = true
-  on_boot         = true
-  stop_on_destroy = true
-
-  disk {
-    datastore_id = local.datastore_id
-    file_id      = proxmox_virtual_environment_download_file.ubuntu_24_04.id
-    interface    = "virtio0"
-    file_format  = "raw"
-    size         = 200
-  }
-  network_device {
-    bridge = "vmbr0"
-  }
-
-  lifecycle {
-    ignore_changes = [
-      started,
-      disk[0].file_id
-    ]
-  }
-
-}
-
-
-
-resource "proxmox_virtual_environment_file" "kubernetes_user_data" {
-  content_type = "snippets"
-  datastore_id = "shared-nfs"
-  node_name    = local.node_name
-  overwrite    = true
-
-  source_raw {
-    data = <<-EOF
-    #cloud-config
-    hostname: kubernetes-1
-    users:
-      - name: mandy
-        groups:
-          - sudo
-        shell: /bin/bash
-        ssh_authorized_keys:
-          - ${trimspace(data.local_file.ssh_public_key.content)}
-        sudo: ALL=(ALL) NOPASSWD:ALL
-    runcmd:
-        - apt update
-        - apt install -y qemu-guest-agent net-tools
-        - timedatectl set-timezone Europe/Brussels
-        - systemctl enable qemu-guest-agent
-        - systemctl start qemu-guest-agent
-        - echo "done" > /tmp/cloud-config.done
-    EOF
-
-    file_name = "user-data-cloud-config.yaml"
-  }
 }

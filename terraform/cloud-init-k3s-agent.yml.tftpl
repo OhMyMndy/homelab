@@ -1,0 +1,28 @@
+#cloud-config
+hostname: ${hostname}
+users:
+  - name: ${user}
+    groups:
+      - sudo
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ${ssh_public_key}
+    sudo: ALL=(ALL) NOPASSWD:ALL
+runcmd:
+  - apt update
+  - apt-get install -y -q qemu-guest-agent net-tools
+  - timedatectl set-timezone Europe/Brussels
+  - systemctl enable qemu-guest-agent
+  - systemctl start qemu-guest-agent
+
+  - apt-get update
+  - apt-get install nmap -y
+  - |
+    echo "Waiting for k3s server..."
+    until nmap ${k3s_server} -p 6443 >/dev/null; do sleep 10; done
+  - |
+    curl -sfL https://get.k3s.io \
+      | INSTALL_K3S_EXEC='agent ${k3s_args} --token ${token}' \
+      sh -
+
+  - echo "done" > /tmp/cloud-config.done
