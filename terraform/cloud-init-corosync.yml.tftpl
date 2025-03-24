@@ -1,0 +1,21 @@
+#cloud-config
+hostname: ${hostname}
+users:
+  - name: ${user}
+    groups:
+      - sudo
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ${ssh_public_key}
+    sudo: ALL=(ALL) NOPASSWD:ALL
+runcmd:
+  - apt update
+  - apt-get install -y -q qemu-guest-agent net-tools
+  - timedatectl set-timezone Europe/Brussels
+  - systemctl enable qemu-guest-agent
+  - systemctl start qemu-guest-agent
+
+  - apt-get update
+  - apt-get install corosync-qnetd corosync-qdevice -y
+
+  - echo "done" > /tmp/cloud-config.done
