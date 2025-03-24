@@ -15,17 +15,37 @@ runcmd:
   - systemctl enable qemu-guest-agent
   - systemctl start qemu-guest-agent
 
-
   - |
-    curl -sfL https://get.k3s.io \
-      | INSTALL_K3S_EXEC='server --write-kubeconfig-mode 744 --disable traefik --flannel-backend=none --disable-network-policy --disable-kube-proxy --token ${token} --cluster-init' \
-      sh -
+    export INSTALL_K3S_VERSION="${k3s_version}"
+    export K3S_TOKEN="${token}"
+    export INSTALL_K3S_EXEC="server ${k3s_args} --write-kubeconfig-mode 744 --tls-san ${tls_san} \
+      --disable traefik --flannel-backend=none --disable-network-policy --disable-kube-proxy"
+    curl -sfL https://get.k3s.io | sh -
   - export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+  - until kubectl get pod; do sleep 5; done
+  - kubectl label node $(hostname) node.kubernetes.io/worker=
+  - |
+    ln -sf /var/lib/rancher/k3s/agent/etc/containerd /etc/
+    touch /etc/containerd/config.toml
+
+    mkdir -p /etc/cni
+    ln -sf /var/lib/rancher/k3s/agent/etc/cni/net.d /etc/cni/
+
+    cat <<EOM >/etc/systemd/system/containerd.service
+    [Unit]
+    Description=Dummy Containerd Unit files
+
+    [Service]
+    Type=simple
+    ExecStart=/usr/bin/sleep infinity
+    EOM
+
+    systemctl daemon-reload
+    systemctl enable --now containerd
+    systemctl status containerd
 
   - |
     curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-
-
   - |
     CILIUM_CLI_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/cilium-cli/main/stable.txt)
     CLI_ARCH=amd64
@@ -35,12 +55,12 @@ runcmd:
     sudo tar xzvfC cilium-linux-${"$"}{CLI_ARCH}.tar.gz /usr/local/bin
     rm cilium-linux-${"$"}{CLI_ARCH}.tar.gz{,.sha256sum}
 
-  - until kubectl get pod; do sleep 5; done
+
 
   - export HOME=/root
   - |
     set -x;
-    cilium install --version 1.17.1 --wait --set=ipam.operator.clusterPoolIPv4PodCIDRList="10.42.0.0/16" \
+    cilium install --version 1.17.2 --wait --set=ipam.operator.clusterPoolIPv4PodCIDRList="10.42.0.0/16" \
       --set k8sServiceHost=${ip_address} \
       --set k8sServicePort=6443 \
       --set kubeProxyReplacement=true
@@ -60,7 +80,7 @@ runcmd:
     sudo tar xzvfC hubble-linux-${"$"}{HUBBLE_ARCH}.tar.gz /usr/local/bin
     rm hubble-linux-${"$"}{HUBBLE_ARCH}.tar.gz{,.sha256sum}
 
-
+  - until kubectl get pod; do sleep 5; done
   - helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
   - |
     set -x;
@@ -71,15 +91,45 @@ runcmd:
 
   - until kubectl rollout status -n ingress-nginx deploy ingress-nginx-controller; do sleep 5; done
 
+  - helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+  - |
+    helm upgrade --install --create-namespace -n monitoring kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+        --version 69.8.2
+
   - helm repo add argo https://argoproj.github.io/argo-helm
   - |
     set -x;
-    helm upgrade --install argocd argo/argo-cd --namespace argocd --wait --create-namespace \
-      --set global.domain=argocd.${ip_address}.sslip.io \
+    helm upgrade --install --version 7.8.13 argocd argo/argo-cd --namespace argocd --wait --create-namespace \
+      --set global.domain=argocd.k8s.ohmymndy.com \
       --set server.ingress.enabled=true \
       --set server.ingress.ingressClassName=nginx \
       --set configs.params."server\.insecure"=true \
       --set-json server.ingress.annotations={}
+
+
+#  - |
+#    kubectl apply -k github.com/confidential-containers/operator/config/release?ref=v0.12.0
+#    kubectl apply -k github.com/confidential-containers/operator/config/samples/ccruntime/default?ref=v0.12.0
+
+  - |
+    apt-get install glusterfs-server nmap -y
+    systemctl start glusterd
+
+    mkdir -p /var/lib/gluster/gv0
+
+    # wait for other nodes to be ready
+    until nmap 10.0.40.82 -Pn  -p 24007 >/dev/null && nmap 10.0.40.83 -Pn  -p 24007 >/dev/null ; do sleep 5; done
+    sleep 10
+    gluster peer probe 10.0.40.82
+    gluster peer probe 10.0.40.83
+
+
+    gluster volume create gv0 replica 3 10.0.40.81:/var/lib/gluster/gv0 10.0.40.82:/var/lib/gluster/gv0 10.0.40.83:/var/lib/gluster/gv0 force
+    gluster volume start gv0
+    mkdir -p /mnt/gv0
+    echo "127.0.0.1:/gv0 /mnt/gv0 glusterfs defaults,_netdev 0 0" >> /etc/fstab
+    systemctl daemon-reload
+    mount -a
 
 
   - echo "done" > /tmp/cloud-config.done

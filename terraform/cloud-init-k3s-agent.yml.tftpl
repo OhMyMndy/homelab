@@ -20,9 +20,44 @@ runcmd:
   - |
     echo "Waiting for k3s server..."
     until nmap ${k3s_server} -p 6443 >/dev/null; do sleep 10; done
-  - |
-    curl -sfL https://get.k3s.io \
-      | INSTALL_K3S_EXEC='agent ${k3s_args} --token ${token}' \
-      sh -
 
+  - |
+    export INSTALL_K3S_VERSION='${k3s_version}'
+    export K3S_TOKEN="${token}"
+    export INSTALL_K3S_EXEC="server ${k3s_args} --write-kubeconfig-mode 744 --disable traefik \
+      --flannel-backend=none --disable-network-policy --disable-kube-proxy --tls-san ${tls_san}"
+    curl -sfL https://get.k3s.io | sh -
+
+  - |
+    ln -sf /var/lib/rancher/k3s/agent/etc/containerd /etc/
+    touch /etc/containerd/config.toml
+
+    mkdir -p /etc/cni
+    ln -sf /var/lib/rancher/k3s/agent/etc/cni/net.d /etc/cni/
+
+    cat <<EOM >/etc/systemd/system/containerd.service
+    [Unit]
+    Description=Dummy Containerd Unit files
+
+    [Service]
+    Type=simple
+    ExecStart=/usr/bin/sleep infinity
+    EOM
+
+    systemctl daemon-reload
+    systemctl enable --now containerd
+    systemctl status containerd
+
+  - |
+    apt-get install glusterfs-server nmap -y
+    mkdir -p /var/lib/gluster/gv0
+    mkdir -p /mnt/gv0
+    systemctl start glusterd
+
+    # Wait until volume is assigned
+    until gluster volume info gv0; do sleep 5; done
+
+    echo "127.0.0.1:/gv0 /mnt/gv0 glusterfs defaults,_netdev 0 0" >> /etc/fstab
+    systemctl daemon-reload
+    mount -a
   - echo "done" > /tmp/cloud-config.done
