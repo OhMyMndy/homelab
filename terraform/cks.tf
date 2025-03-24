@@ -1,4 +1,5 @@
 module "cks" {
+  count = 0
   source = "./modules/vm"
 
   hostname = "cks"
@@ -20,7 +21,8 @@ module "cks" {
 
   cloud_init = templatefile("./cloud-init-cks.yml.tftpl", {
     ssh_public_key: trimspace(data.local_file.ssh_public_key.content),
-    user = "mandy"
+    user = "mandy",
+    hostname = "cks"
   })
 
 }
