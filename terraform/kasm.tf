@@ -1,5 +1,6 @@
 module "kasm" {
   source = "./modules/vm"
+  count = 0
 
   hostname = "kasm-1"
   tags     = ["terraform", "ubuntu", "kasm"]
