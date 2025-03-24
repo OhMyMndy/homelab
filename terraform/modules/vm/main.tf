@@ -15,6 +15,9 @@ resource "proxmox_virtual_environment_vm" "this" {
   description = "Managed by Terraform"
   tags        = var.tags
 
+  timeout_create = 240
+  timeout_start_vm = 240
+  timeout_clone = 240
   vm_id = var.vm_id
 
   node_name = var.node_name
@@ -85,6 +88,8 @@ resource "proxmox_virtual_environment_vm" "this" {
     file_format  = "raw"
     size         = var.disk_size
   }
+
+
   network_device {
     bridge = "vmbr0"
   }
