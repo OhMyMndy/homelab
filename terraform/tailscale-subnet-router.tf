@@ -79,7 +79,7 @@ resource "proxmox_virtual_environment_file" "tailscale-subnet-router" {
   overwrite    = true
 
   source_raw {
-    data      = <<-EOF
+    data      = <<-EOD
     #cloud-config
     hostname: tailscale-subnet-router
     users:
@@ -100,10 +100,18 @@ resource "proxmox_virtual_environment_file" "tailscale-subnet-router" {
         - curl -fsSL https://tailscale.com/install.sh | sh
         - echo "net.ipv4.ip_forward = 1" > /etc/sysctl.d/tailscale.conf
         - sysctl --system
+        - |
+          cat <<EOF | sudo tee  /etc/NetworkManager/dispatcher.d/50-tailscale >/dev/null
+          #!/usr/bin/env bash
+
+          if [[ "$DEVICE_IFACE" = "tailscale0" ]]; then
+            ip route del 10.0.40.0/24 dev tailscale0 table 52
+          fi
+          EOF
 
         - tailscale up --auth-key "${var.tailscale_auth_key}" --accept-routes --advertise-routes 10.0.40.0/24 --advertise-exit-node
         - echo "done" > /tmp/cloud-config.done
-    EOF
+    EOD
     file_name = "tailscale-subnet-router-cloud-config.yaml"
 
   }
