@@ -1,0 +1,101 @@
+services:
+  arroyo:
+    image: ghcr.io/arroyosystems/arroyo:latest
+    init: true
+    restart: unless-stopped
+    container_name: arroyo
+    cpus: 1.25
+    mem_limit: 1g
+    networks:
+      - default
+      - reverse-proxy
+      # - lldap
+    environment:
+      - ARROYO__DATABASE__TYPE=postgres
+      - ARROYO__DATABASE__HOST=postgres
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.arroyo.rule=Host(`arroyo.home.ohmymndy.com`)"
+      # - "traefik.http.routers.arroyo.service=arroyo"
+      # - "traefik.http.services.arroyo.loadbalancer.server.port=9000"
+      - "traefik.http.routers.arroyo.tls=true"
+      - "traefik.enable=true"
+    # healthcheck:
+    #   test:
+    #     ["CMD-SHELL", "bash", "-c", "cat < /dev/null > /dev/tcp/127.0.0.1/80"]
+    #   interval: 1m
+    #   timeout: 1s
+    #   retries: 3
+    #   start_period: 2m
+    #   start_interval: 1s
+
+  postgres:
+    image: postgres:16
+    container_name: arroyo-postgres
+    volumes:
+      - ./storage/db/postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: arroyo
+      POSTGRES_DB: arroyo
+      POSTGRES_PASSWORD: arroyo
+    command: postgres -c wal_level=logical
+    restart: unless-stopped
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 2181:2181
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    depends_on:
+      - zookeeper
+    ports:
+      - 9094:9094
+      - 9092:9092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: EXTERNAL://0.0.0.0:9092,INTERNAL://0.0.0.0:9094
+      KAFKA_ADVERTISED_LISTENERS: EXTERNAL://localhost:9092,INTERNAL://kafka:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: EXTERNAL:PLAINTEXT,INTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  debezium:
+    image: debezium/connect:2.3
+    depends_on:
+      - kafka
+    ports:
+      - 8083:8083
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9094
+      GROUP_ID: 1
+      CONFIG_STORAGE_TOPIC: debezium_connect_configs
+      OFFSET_STORAGE_TOPIC: debezium_connect_offsets
+      STATUS_STORAGE_TOPIC: debezium_connect_statuses
+
+  pgduck:
+    image: pgduckdb/pgduckdb:16-main
+    init: true
+    restart: unless-stopped
+    container_name: pgduck
+    cpus: 1.25
+    mem_limit: 1g
+    networks:
+      - default
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+
+networks:
+  default:
+  reverse-proxy:
+    name: reverse-proxy
+    external: true
+  lldap:
+    name: lldap_default
+    external: true
+volumes:
+  redis:
