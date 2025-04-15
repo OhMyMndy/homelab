@@ -15,6 +15,9 @@ entryPoints:
           - main: "home.ohmymndy.com"
             sans: 
               - "*.home.ohmymndy.com"
+          - main: "nexus.home.ohmymndy.com"
+            sans: 
+              - "*.nexus.home.ohmymndy.com"
           # - main: "home-local.ohmymndy.com"
           #   sans: 
           #     - "*.home-local.ohmymndy.com"
