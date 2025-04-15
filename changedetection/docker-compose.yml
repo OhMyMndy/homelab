@@ -3,6 +3,8 @@ services:
   changedetection:
     image: lscr.io/linuxserver/changedetection.io:0.48.05
     container_name: changedetection
+    cpus: 0.5
+    mem_limit: 256m
     environment:
       - PUID=${PUID:?}
       - PGID=${PGID:?}
@@ -28,14 +30,26 @@ services:
   sockpuppetbrowser:
     container_name: sockpuppetbrowser
     image: dgtlmoon/sockpuppetbrowser:latest
-    # cap_add:
-    #     - SYS_ADMIN
     restart: unless-stopped
+    cpus: 0.5
+    mem_limit: 1024m
+    # cap_add:
+    #   - SYS_ADMIN
+    volumes:
+      - type: tmpfs
+        target: /tmp
     environment:
       - SCREEN_WIDTH=1920
       - SCREEN_HEIGHT=1024
       - SCREEN_DEPTH=16
-      - MAX_CONCURRENT_CHROME_PROCESSES=10
+      - MAX_CONCURRENT_CHROME_PROCESSES=5
+    healthcheck:
+      test: "python3 /usr/src/app/docker-health-check.py --host http://localhost"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+      start_interval: 5s
 networks:
   default:
   reverse-proxy:
