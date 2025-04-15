@@ -15,6 +15,6 @@ add_to_env GITEA_INTERNAL_TOKEN "$(docker run -it --rm docker.io/gitea/gitea:1 g
 
 source ../lldap/.env
 
-add_to_env LLDAP_LDAP_USER_PASS "${LLDAP_LDAP_USER_PASS}"
+add_to_env_force LLDAP_LDAP_USER_PASS "${ADMIN_RO_PASSWORD}"
 
 create_host_dirs

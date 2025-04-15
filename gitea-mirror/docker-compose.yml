@@ -1,10 +1,11 @@
 name: gitea-mirror
 x-gitea: &gitea
-  image: docker.io/gitea/gitea:1.22.6
+  image: docker.io/gitea/gitea:1.23.7-rootless
   depends_on:
     - postgres
   volumes:
-    - ./storage/gitea:/data
+    - ./storage/gitea:/var/lib/gitea
+    - ./config/gitea:/etc/gitea
     - /etc/timezone:/etc/timezone:ro
     - /etc/localtime:/etc/localtime:ro
   environment:
@@ -45,9 +46,8 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.docker.network=reverse-proxy"
-      - "traefik.http.routers.gitea-mirror.rule=Host(`gitea-mirror.home.ohmymnd\
-        y.com`)"
-      - "traefik.http.services.gitea-mirror.loadbalancer.server`.port=3000"
+      - "traefik.http.routers.gitea-mirror.rule=Host(`gitea-mirror.home.ohmymndy.com`)"
+      - "traefik.http.services.gitea-mirror.loadbalancer.server.port=3000"
       - "traefik.http.routers.gitea-mirror.tls=true"
       - "traefik.enable=true"
     healthcheck:
@@ -60,6 +60,8 @@ services:
           "--spider",
           "http://127.0.0.1:3000",
         ]
+      start_period: 30s
+      start_interval: 2s
       interval: 30s
       timeout: 3s
 
@@ -88,11 +90,11 @@ services:
         gitea admin auth $$command $$id_filter \
         --name LLDAP --security-protocol Unencrypted \
         --host lldap --port 3890 \
-        --bind-dn "uid=admin,ou=people,dc=ohmymndy,dc=com" \
+        --bind-dn "uid=admin_ro,ou=people,dc=ohmymndy,dc=com" \
         --bind-password "$LLDAP_LDAP_USER_PASS" \
         --user-search-base "ou=people,dc=ohmymndy,dc=com" \
         --user-filter "(&(objectClass=person)(|(uid=%[1]s)(mail=%[1]s)))" \
-        --admin-filter "(memberof=cn=lldap_admin,ou=groups,dc=ohmymndy,dc=com)" \
+        --admin-filter "(memberof=cn=gitea_admin,ou=groups,dc=ohmymndy,dc=com)" \
         --username-attribute uid --firstname-attribute givenName \
         --surname-attribute sn --email-attribute mail \
         --avatar-attribute jpegPhoto --synchronize-users
