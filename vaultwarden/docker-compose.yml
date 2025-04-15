@@ -2,6 +2,8 @@ name: vaultwarden
 services:
   vaultwarden:
     image: vaultwarden/server:1.32.7
+    cpus: 0.5
+    memory: 256m
     container_name: vaultwarden
     volumes:
       - ./storage/vaultwarden:/data/:rw
