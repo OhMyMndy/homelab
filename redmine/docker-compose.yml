@@ -3,6 +3,8 @@ services:
   postgresql:
     image: docker.io/bitnami/postgresql:16
     container_name: redmine-postgresql
+    cpus: 0.5
+    mem_limit: 256m
     volumes:
       - ./storage/postresql:/bitnami/postgresql
     environment:
@@ -14,6 +16,8 @@ services:
   redmine:
     image: docker.io/bitnami/redmine:5
     container_name: redmine
+    cpus: 0.5
+    mem_limit: 512m
     depends_on:
       - postgresql
     volumes:
@@ -30,6 +34,7 @@ services:
     networks:
       - default
       - reverse-proxy
+      - lldap
     restart: unless-stopped
     labels:
       - "traefik.docker.network=reverse-proxy"
@@ -42,3 +47,6 @@ networks:
   reverse-proxy:
     external: true
     name: reverse-proxy
+  lldap:
+    external: true
+    name: lldap_default
