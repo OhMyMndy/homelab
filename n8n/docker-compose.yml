@@ -11,6 +11,10 @@ x-n8n: &service-n8n
     - N8N_PERSONALIZATION_ENABLED=false
     - N8N_ENCRYPTION_KEY
     - N8N_USER_MANAGEMENT_JWT_SECRET
+    # - N8N_HOST=n8n.home.ohmymndy.com
+    # - N8N_PROTOCOL=https
+    # - N8N_PORT=443
+    - N8N_EDITOR_BASE_URL=https://n8n.home.ohmymndy.com
   links:
     - postgres
 
@@ -26,7 +30,7 @@ x-ollama: &service-ollama
 
 x-init-ollama: &init-ollama
   image: ollama/ollama:latest
-  restart: unless-stopped
+  restart: no
   # networks: ["demo"]
   container_name: ollama-pull-llama
   volumes:
@@ -34,11 +38,17 @@ x-init-ollama: &init-ollama
   entrypoint: /bin/sh
   command:
     - "-c"
-    - "sleep 3; OLLAMA_HOST=ollama:11434 ollama pull llama3.2:1B"
+    - |
+      sleep 3
+      export OLLAMA_HOST=ollama:11434 
+      ollama pull deepseek-r1:7b
+      ollama pull deepseek-r1:14b
 
 services:
   postgres:
     image: postgres:16-alpine
+    cpus: 0.5
+    mem_limit: 256m
     # networks: ["demo"]
     restart: unless-stopped
     container_name: n8n-postgresql
@@ -73,6 +83,8 @@ services:
 
   n8n:
     <<: *service-n8n
+    cpus: 0.5
+    mem_limit: 512m
     container_name: n8n
     restart: unless-stopped
     # ports:
@@ -99,6 +111,8 @@ services:
 
   qdrant:
     image: qdrant/qdrant
+    cpus: 0.5
+    mem_limit: 256m
     container_name: n8n-qdrant
     # networks: ["demo"]
     restart: unless-stopped
