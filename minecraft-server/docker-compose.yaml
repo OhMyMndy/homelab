@@ -1,0 +1,61 @@
+services:
+  mc:
+    image: itzg/minecraft-server
+    tty: true
+    init: true
+    restart: unless-stopped
+    container_name: minecraft-server
+    cpus: 2
+    mem_limit: 4400m
+    stdin_open: true
+    ports:
+      - "25565:25565"
+    environment:
+      EULA: "TRUE" # MODPACK_PLATFORM: AUTO_CURSEFORGE
+      # Allocate API key from https://console.curseforge.com/
+      # and set in .env file making sure to double up dollar signs, such as
+      # CF_API_KEY=$$2a$$10$$....
+      # Refer to https://docker-minecraft-server.readthedocs.io/en/latest/types-and-platforms/mod-platforms/auto-curseforge/#api-key
+      # CF_API_KEY: ${CF_API_KEY:?}
+      #  CF_SLUG: better-mc-forge-bmc4
+      #      CF_FILENAME_MATCHER: v18.5
+      MEMORY: 4G
+      # HARDCORE: true
+      FORCE_GAMEMODE: true
+      DIFFICULTY: easy
+      MODE: survival
+      VERSION: 1.21.4
+      # SEED: new-seed
+    volumes:
+      # attach the relative directory 'data' to the container's /data path
+      - ./storage/minecraft-server:/data
+  # mc-2:
+  #   image: itzg/minecraft-server
+  #   tty: true
+  #   init: true
+  #   restart: unless-stopped
+  #   container_name: minecraft-server-2
+  #   cpus: 1
+  #   mem_limit: 4400m
+  #   stdin_open: true
+  #   ports:
+  #     - "25568:25565"
+  #   environment:
+  #     EULA: "TRUE" # MODPACK_PLATFORM: AUTO_CURSEFORGE
+  #     # Allocate API key from https://console.curseforge.com/
+  #     # and set in .env file making sure to double up dollar signs, such as
+  #     # CF_API_KEY=$$2a$$10$$....
+  #     # Refer to https://docker-minecraft-server.readthedocs.io/en/latest/types-and-platforms/mod-platforms/auto-curseforge/#api-key
+  #     # CF_API_KEY: ${CF_API_KEY:?}
+  #     #  CF_SLUG: better-mc-forge-bmc4
+  #     #      CF_FILENAME_MATCHER: v18.5
+  #     MEMORY: 4G
+  #     # HARDCORE: true
+  #     FORCE_GAMEMODE: true
+  #     DIFFICULTY: easy
+  #     MODE: survival
+  #     SEED: pokigorlie
+  #     VERSION: 1.21.5
+  #   volumes:
+  #     # attach the relative directory 'data' to the container's /data path
+  #     - ./storage/minecraft-server-2:/data
