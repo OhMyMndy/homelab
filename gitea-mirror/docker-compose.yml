@@ -47,7 +47,7 @@ services:
       - "traefik.docker.network=reverse-proxy"
       - "traefik.http.routers.gitea-mirror.rule=Host(`gitea-mirror.home.ohmymnd\
         y.com`)"
-      - "traefik.http.services.gitea-mirror.loadbalancer.server.port=3000"
+      - "traefik.http.services.gitea-mirror.loadbalancer.server`.port=3000"
       - "traefik.http.routers.gitea-mirror.tls=true"
       - "traefik.enable=true"
     healthcheck:
