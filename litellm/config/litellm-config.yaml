@@ -4,30 +4,9 @@ general_settings:
   disable_master_key_return: true
 model_list:
 
-  - model_name: "mistralai/mistral-nemo"
+  - model_name: "deepseek/deepseek-r1"
     litellm_params:
-      model: "openrouter/mistralai/mistral-nemo"
-      api_key: os.environ/OPENROUTER_API_KEY
-      tags: ["paid"]
-
-
-  - model_name: "mistralai/mistral-large-2411"
-    litellm_params:
-      model: "openrouter/mistralai/mistral-large-2411"
-      api_key: os.environ/OPENROUTER_API_KEY
-      tags: ["paid"]
-
-
-  - model_name: "openai/gpt-4o-2024-11-20"
-    litellm_params:
-      model: "openrouter/openai/gpt-4o-2024-11-20"
-      api_key: os.environ/OPENROUTER_API_KEY
-      tags: ["paid"]
-
-
-  - model_name: "openai/o1-mini-2024-09-12"
-    litellm_params:
-      model: "openrouter/openai/o1-mini-2024-09-12"
+      model: "openrouter/deepseek/deepseek-r1"
       api_key: os.environ/OPENROUTER_API_KEY
       tags: ["paid"]
 
@@ -39,6 +18,13 @@ model_list:
       tags: ["paid"]
 
 
+  - model_name: "google/gemini-2.5-pro-preview-03-25"
+    litellm_params:
+      model: "openrouter/google/gemini-2.5-pro-preview-03-25"
+      api_key: os.environ/OPENROUTER_API_KEY
+      tags: ["paid"]
+
+
   - model_name: "meta-llama/llama-3.1-8b-instruct"
     litellm_params:
       model: "openrouter/meta-llama/llama-3.1-8b-instruct"
@@ -46,16 +32,86 @@ model_list:
       tags: ["paid"]
 
 
-  - model_name: "deepseek/deepseek-r1-distill-llama-70b"
+  - model_name: "mistral/ministral-8b"
     litellm_params:
-      model: "openrouter/deepseek/deepseek-r1-distill-llama-70b"
+      model: "openrouter/mistral/ministral-8b"
       api_key: os.environ/OPENROUTER_API_KEY
       tags: ["paid"]
 
 
-  - model_name: "deepseek/deepseek-r1"
+  - model_name: "mistralai/mistral-large-2411"
     litellm_params:
-      model: "openrouter/deepseek/deepseek-r1"
+      model: "openrouter/mistralai/mistral-large-2411"
+      api_key: os.environ/OPENROUTER_API_KEY
+      tags: ["paid"]
+
+
+  - model_name: "mistralai/mistral-nemo"
+    litellm_params:
+      model: "openrouter/mistralai/mistral-nemo"
+      api_key: os.environ/OPENROUTER_API_KEY
+      tags: ["paid"]
+
+
+  - model_name: "openai/gpt-4.1"
+    litellm_params:
+      model: "openrouter/openai/gpt-4.1"
+      api_key: os.environ/OPENROUTER_API_KEY
+      tags: ["paid"]
+
+
+  - model_name: "openai/gpt-4.1-mini"
+    litellm_params:
+      model: "openrouter/openai/gpt-4.1-mini"
+      api_key: os.environ/OPENROUTER_API_KEY
+      tags: ["paid"]
+
+
+  - model_name: "openai/gpt-4.1-nano"
+    litellm_params:
+      model: "openrouter/openai/gpt-4.1-nano"
+      api_key: os.environ/OPENROUTER_API_KEY
+      tags: ["paid"]
+
+
+  - model_name: "openai/gpt-4o-2024-11-20"
+    litellm_params:
+      model: "openrouter/openai/gpt-4o-2024-11-20"
+      api_key: os.environ/OPENROUTER_API_KEY
+      tags: ["paid"]
+
+
+  - model_name: "openai/o1-mini"
+    litellm_params:
+      model: "openrouter/openai/o1-mini"
+      api_key: os.environ/OPENROUTER_API_KEY
+      tags: ["paid"]
+
+
+  - model_name: "openai/o1-mini-2024-09-12"
+    litellm_params:
+      model: "openrouter/openai/o1-mini-2024-09-12"
+      api_key: os.environ/OPENROUTER_API_KEY
+      tags: ["paid"]
+
+
+  - model_name: "openai/o1-pro"
+    litellm_params:
+      model: "openrouter/openai/o1-pro"
+      api_key: os.environ/OPENROUTER_API_KEY
+      tags: ["paid"]
+
+
+  - model_name: "openai/o3-mini"
+    litellm_params:
+      model: "openrouter/openai/o3-mini"
+      api_key: os.environ/OPENROUTER_API_KEY
+      tags: ["paid"]
+
+
+  - model_name: "openai/o3-mini-high"
+    litellm_params:
+      model: "openrouter/openai/o3-mini-high"
       api_key: os.environ/OPENROUTER_API_KEY
       tags: ["paid"]
 
@@ -63,10 +119,11 @@ model_list:
 
 
 
-  - model_name: "ollama/phi4:14b (self hosted)"
-    litellm_params:
-      tags: ["free"]
-      model: "ollama/phi4:14b"
-      api_base: http://ollama.10.0.40.51.sslip.io/
-      extra_headers:
-      "Authorization": "ollama:password"
+ # - model_name: "ollama/phi3:14b (self hosted)"
+ #   litellm_params:
+ #     tags: ["free"]
+ #     model: "ollama/phi4:14b"
+ #     #api_base: http://ollama.10.0.40.51.sslip.io/
+ #     api_base: http://mandys-mac-mini.tail970d5.ts.net:11434
+ #     #extra_headers:
+ #     #"Authorization": "ollama:password"

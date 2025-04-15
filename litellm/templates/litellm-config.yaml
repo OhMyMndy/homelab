@@ -20,10 +20,11 @@ model_list:
       tags: ["free"]
 {{ end }}
 
-  - model_name: "ollama/phi4:14b (self hosted)"
-    litellm_params:
-      tags: ["free"]
-      model: "ollama/phi4:14b"
-      api_base: http://ollama.10.0.40.51.sslip.io/
-      extra_headers:
-      "Authorization": "ollama:password"
+ # - model_name: "ollama/phi3:14b (self hosted)"
+ #   litellm_params:
+ #     tags: ["free"]
+ #     model: "ollama/phi4:14b"
+ #     #api_base: http://ollama.10.0.40.51.sslip.io/
+ #     api_base: http://mandys-mac-mini.tail970d5.ts.net:11434
+ #     #extra_headers:
+ #     #"Authorization": "ollama:password"

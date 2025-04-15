@@ -21,6 +21,8 @@ services:
     image: hairyhenderson/gomplate:stable
     container_name: litellm-init
     restart: no
+    cpus: 0.5
+    mem_limit: 128m
     user: ${PUID:?}:${PGID:?}
     working_dir: /config
     command: -c .=/models.yaml --input-dir /templates --output-dir /config
@@ -30,8 +32,10 @@ services:
       - ./templates:/templates
 
   litellm:
-    image: litellm/litellm:v1.59.8
+    image: ghcr.io/berriai/litellm:main-v1.65.1-nightly
     container_name: litellm
+    cpus: 0.25
+    mem_limit: 512m
     volumes:
       - ./config/litellm-config.yaml:/app/config.yaml
     depends_on:
@@ -55,7 +59,6 @@ services:
       - "traefik.http.routers.litellm.rule=Host(`litellm.home.ohmymndy.com`)"
       - "traefik.http.routers.litellm.tls=true"
       - "traefik.enable=true"
-
     healthcheck:
       test:
         ["CMD-SHELL", "bash", "-c", "cat < /dev/null > /dev/tcp/127.0.0.1/4000"]
@@ -69,6 +72,8 @@ services:
     image: ohmymndy/alpine
     container_name: litellm-configure
     restart: no
+    cpus: 0.5
+    mem_limit: 256m
     volumes:
       - ../:/start
     working_dir: /start
@@ -81,6 +86,44 @@ services:
       litellm:
         condition: service_healthy
 
+  ollama-auth:
+    image: ohmymndy/traefik-mw-bearer-auth:f191e5
+    container_name: litellm-ollama-auth
+    restart: unless-stopped
+    cpus: 0.25
+    mem_limit: 128m
+    environment:
+      TOKENS: 12345
+    networks:
+      - default
+      - reverse-proxy
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: litellm-ollama
+    ports:
+      - 7869:11434
+    volumes:
+      - ./storage/ollama:/root/.ollama
+    depends_on:
+      - ollama-auth
+    tty: true
+    cpus: 1
+    mem_limit: 2048m
+    restart: unless-stopped
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_HOST=0.0.0.0
+    networks:
+      - default
+      - reverse-proxy
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.ollama.rule=Host(`ollama.home.ohmymndy.com`)"
+      - "traefik.http.routers.ollama.tls=true"
+      - "traefik.http.middlewares.ollama-auth.forwardauth.address=http://ollama-auth:8087/auth"
+      - "traefik.http.routers.ollama.middlewares=ollama-auth@docker"
+      - "traefik.enable=true"
   # prometheus:
   #   image: prom/prometheus:v3.1.0
   #
