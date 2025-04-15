@@ -1,0 +1,35 @@
+services:
+  proxy-all:
+    image: ohmymndy/proxy-all:0.4
+    restart: unless-stopped
+    container_name: proxy-all
+    networks:
+      - default
+      - reverse-proxy
+    # command: server
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.proxy-all.rule=Host(`proxy-all.home.ohmymndy.com`)"
+      - "traefik.http.services.proxy-all.loadbalancer.server.port=5000"
+      - "traefik.http.routers.proxy-all.tls=true"
+      # - "traefik.http.middlewares.proxy-all.headers.browserxssfilter=false"
+      - "traefik.enable=true"
+    # healthcheck:
+    #   test:
+    #     [
+    #       "CMD",
+    #       "wget",
+    #       "--no-verbose",
+    #       "--tries=1",
+    #       "--spider",
+    #       "http://127.0.0.1:5000",
+    #     ]
+    #   interval: 30s
+    #   timeout: 3s
+    #   start_period: 60s
+    #   start_interval: 5s
+networks:
+  default:
+  reverse-proxy:
+    name: reverse-proxy
+    external: true
