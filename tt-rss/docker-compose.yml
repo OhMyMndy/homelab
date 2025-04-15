@@ -2,6 +2,8 @@ services:
   app:
     image: cthulhoo/ttrss-fpm-pgsql-static:eb470473
     container_name: tt-rss
+    cpus: 0.5
+    mem_limit: 256m
     depends_on:
       - db
     volumes:
@@ -17,6 +19,8 @@ services:
   backups:
     image: cthulhoo/ttrss-fpm-pgsql-static:eb470473
     container_name: tt-rss-backups
+    cpus: 0.5
+    mem_limit: 256m
     depends_on:
       - db
     volumes:
@@ -32,6 +36,8 @@ services:
   db:
     image: postgres:15-alpine
     container_name: tt-rss-postgresql
+    cpus: 0.5
+    mem_limit: 256m
     volumes:
       - ./storage/db:/var/lib/postgresql/data
     environment:
@@ -48,6 +54,8 @@ services:
   proxy:
     image: nginx:1.27.3
     container_name: tt-rss-proxy
+    cpus: 0.25
+    mem_limit: 128m
     depends_on:
       - web-nginx
     volumes:
@@ -70,6 +78,8 @@ services:
   updater:
     image: cthulhoo/ttrss-fpm-pgsql-static:eb470473
     container_name: tt-rss-updater
+    cpus: 0.25
+    mem_limit: 256m
     depends_on:
       - app
     volumes:
@@ -86,6 +96,8 @@ services:
   web-nginx:
     image: cthulhoo/ttrss-web-nginx:472058e0
     container_name: tt-rss-nginx
+    cpus: 0.25
+    mem_limit: 128m
     depends_on:
       - app
     volumes:
