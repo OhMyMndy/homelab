@@ -3,6 +3,8 @@ services:
   app:
     image: nocobase/nocobase:1.4.10
     container_name: pokeblahaj
+    cpus: 0.5
+    mem_limit: 768m
     depends_on:
       - postgres
     volumes:
@@ -46,6 +48,8 @@ services:
   postgres:
     image: postgres:16
     container_name: pokeblahaj-postgresql
+    cpus: 0.25
+    mem_limit: 128m
     volumes:
       - ./storage/db/postgres:/var/lib/postgresql/data
     environment:
