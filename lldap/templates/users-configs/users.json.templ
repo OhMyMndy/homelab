@@ -1,0 +1,15 @@
+{{ range .users }}
+{
+  "id": "{{ .id }},
+  "email": "{{ .email }}",
+  "password": "{{ .password }}",
+  "displayName": "{{ .displayName }}",
+  "firstName": "{{ .firstName }}",
+  "lastName": "{{ .lastName }}",
+  "groups": [
+    {{ range $i, $e := .groups }}
+    "{{ $e.name }}", 
+    {{ end }}
+  ]
+}
+{{ end }}

@@ -22,20 +22,23 @@ x-lldap: &lldap
     # - LLDAP_DATABASE_URL=postgres://postgres-user:password@postgres-server/my-database
     # If using SMTP, set the following variables
     # - LLDAP_SMTP_OPTIONS__ENABLE_PASSWORD_RESET=true
-    # - LLDAP_SMTP_OPTIONS__SERVER=smtp.example.com
-    # - LLDAP_SMTP_OPTIONS__PORT=465 # Check your smtp providor's documentation for this setting
+    # - LLDAP_SMTP_OPTIONS__SERVER=smtprelay
+    # - LLDAP_SMTP_OPTIONS__PORT=25# Check your smtp providor's documentation for this setting
     # - LLDAP_SMTP_OPTIONS__SMTP_ENCRYPTION=TLS # How the connection is encrypted, either "NONE" (no encryption, port 25), "TLS" (sometimes called SSL, port 465) or "STARTTLS" (sometimes called TLS, port 587).
     # - LLDAP_SMTP_OPTIONS__USER=no-reply@example.com # The SMTP user, usually your email address
     # - LLDAP_SMTP_OPTIONS__PASSWORD=PasswordGoesHere # The SMTP password
-    # - LLDAP_SMTP_OPTIONS__FROM=no-reply <no-reply@example.com> # The header field, optional: how the sender appears in the email. The first is a free-form name, followed by an email between <>.
+    # - LLDAP_SMTP_OPTIONS__FROM=${LLDAP_FROM:?} # The header field, optional: how the sender appears in the email. The first is a free-form name, followed by an email between <>.
     # - LLDAP_SMTP_OPTIONS__TO=admin <admin@example.com> # Same for reply-to, optional.
     - USER_CONFIGS_DIR=/bootstrap/user-configs
     - GROUP_CONFIGS_DIR=/bootstrap/group-configs
     # - USER_SCHEMAS_DIR=/bootstrap/user-schemas
     # - GROUP_SCHEMAS_DIR=/bootstrap/group-schemas
+    - LLDAP_VERBOSE=true
 services:
   render-templates:
     image: ohmymndy/alpine
+    cpus: 0.5
+    mem_limit: 256m
     container_name: lldap-render-templates
     restart: no
     volumes:
@@ -63,12 +66,29 @@ services:
           envsubst < bootstrap/user-configs/admin.json.templ > bootstrap/user-configs/admin.json
         fi
     user: ${PUID:?}:${PGID:?}
+
+  # init:
+  #   image: hairyhenderson/gomplate:stable
+  #   container_name: litellm-init
+  #   restart: no
+  #   user: ${PUID:?}:${PGID:?}
+  #   working_dir: /config
+  #   command: -c .=/users.yaml --input-dir /templates --output-dir /config
+  #   volumes:
+  #     - ./config:/config
+  #     - ./users.yaml:/users.yaml:ro
+  #     - ./templates:/templates
+  #
+
+  # ldapsearch -D "uid=admin,ou=people,dc=ohmymndy,dc=com" -w "$LDAP_PASSWORD" -x -H ldap://127.0.0.1:3890 -b "dc=ohmymndy,dc=com"
   lldap:
     <<: *lldap
     container_name: lldap
+    cpus: 0.5
+    mem_limit: 256m
     ports:
       # For LDAP, not recommended to expose, see Usage section.
-      # - "3890:3890"
+      - "3890:3890"
       # For LDAPS (LDAP Over SSL), enable port if LLDAP_LDAPS_OPTIONS__ENABLED set true, look env below
       - "6360:6360"
       # For the web front-end
@@ -76,6 +96,7 @@ services:
     networks:
       - default
       - reverse-proxy
+      - lldap
     # command: server
     labels:
       - "traefik.docker.network=reverse-proxy"
@@ -95,11 +116,15 @@ services:
         ]
       interval: 30s
       timeout: 3s
+      start_period: 60s
+      start_interval: 5s
 
   lldap-init:
     <<: *lldap
     entrypoint: /bin/bash
     container_name: lldap-init
+    cpus: 0.5
+    mem_limit: 256m
     restart: no
     command:
       - -c
@@ -118,4 +143,7 @@ networks:
   default:
   reverse-proxy:
     name: reverse-proxy
+    external: true
+  lldap:
+    name: lldap_default
     external: true
