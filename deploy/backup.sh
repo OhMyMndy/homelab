@@ -11,9 +11,9 @@ source deploy/functions.sh
 sudo systemctl stop docker.socket docker.service
 
 # date command to get d-m-y H:i:s
-date=$(date +"%d-%m-%Y-%H:%M:%S")
+date=$(date +"%d-%m-%Y-%H_%M_%S")
 
-mkdir -p backups
+DIR=/mnt/backups/homelab
 
 sudo tar --exclude='deploy' \
   --exclude='audiobookshelf/storage/podcasts' \
@@ -25,8 +25,10 @@ sudo tar --exclude='deploy' \
   --exclude='n8n/storage/ollama/models' \
   --exclude='plex/storage' \
   --exclude='backups' \
-  -czf "backups/backup-homelab-${date}.tar.gz" .
+  --exclude='nexus/storage/nexus/blobs' \
+  --exclude='pokeblahaj/storage/uploads' \
+  -czf "$DIR/backup-homelab-${date}.tar.gz" .
 
-sudo chown "$(id -u):$(id -g)" "backups/backup-homelab-${date}.tar.gz"
+#sudo chown "$(id -u):$(id -g)" "$DIR/backup-homelab-${date}.tar.gz"
 
 sudo systemctl start docker.service

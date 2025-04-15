@@ -78,10 +78,11 @@ function add_to_env() {
 }
 
 function random_password() {
-  openssl rand -base64 38 | tr -d '\n'
+  local length="${1:-38}"
+  openssl rand -base64 $length | tr -dc 'a-zA-Z0-9' | tr -d '\n'
 }
 
 function create_host_dirs() {
   docker compose config | yq '.services[].volumes[].source' | grep "^$PWD" | tr '\n' '\0' |
-    xargs -0 -r -I{} bash -c "source=\"{}\"; if [[ ! \"\$source\" == *.* ]]; then mkdir -p \"\$source\"; fi"
+    xargs -0 -r -I{} bash -c "source=\"{}\"; if [[ ! \"\$source\" == *.* ]]; then mkdir -p \"\$source\"; chmod 777 \"\$source\"; fi"
 }
