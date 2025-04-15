@@ -2,21 +2,22 @@ services:
   appsmith:
     image: index.docker.io/appsmith/appsmith-ce:v1.61
     container_name: appsmith
+    cpus: 1
+    mem_limit: 2000m
     volumes:
       - ./storage/stacks:/appsmith-stacks
     restart: unless-stopped
     networks:
-     - default
-     - reverse-proxy
+      - default
+      - reverse-proxy
     labels:
-     - "traefik.docker.network=reverse-proxy"
-     - "traefik.http.routers.appsmith.rule=Host(`appsmith.home.ohmymndy.com`)"
-     - "traefik.http.services.appsmith.loadbalancer.server.port=80"
-     - "traefik.http.routers.appsmith.tls=true"
-     - "traefik.enable=true"
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.appsmith.rule=Host(`appsmith.home.ohmymndy.com`)"
+      - "traefik.http.services.appsmith.loadbalancer.server.port=80"
+      - "traefik.http.routers.appsmith.tls=true"
+      - "traefik.enable=true"
 networks:
   default:
   reverse-proxy:
-   name: reverse-proxy
-   external: true
-
+    name: reverse-proxy
+    external: true
