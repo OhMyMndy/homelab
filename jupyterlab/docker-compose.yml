@@ -1,0 +1,26 @@
+services:
+  jupyterlab:
+    #image: quay.io/jupyter/datascience-notebook:notebook-7.2.1
+    # image: quay.io/jupyter/scipy-notebook:notebook-7.4.0
+    build:
+      context: .
+    restart: unless-stopped
+    init: true
+    networks:
+      - default
+      - reverse-proxy
+      #environment:
+    volumes:
+      - ./storage/jupyterlab:/home/jovyan/work/:rw
+      - ../../homelab/:/home/jovyan/work/homelab
+    labels:
+      - "traefik.http.routers.jupyterlab.rule=Host(`jupyterlab.home.ohmymndy.com`)"
+      - "traefik.http.routers.jupyterlab.tls=true"
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.enable=true"
+
+networks:
+  default:
+  reverse-proxy:
+    name: reverse-proxy
+    external: true
