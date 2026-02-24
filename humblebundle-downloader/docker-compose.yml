@@ -7,7 +7,6 @@ services:
     container_name: humblebundle-downloader
     volumes:
       - ./run.sh:/run.sh:ro
-      - $HOME/HumbleBundle Ebooks:/library
       - /mnt/media/ebooks/humblebundle/:/library
     env_file:
       - .env
