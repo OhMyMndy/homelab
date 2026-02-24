@@ -1,7 +1,7 @@
 name: pokeblahaj
 services:
   app:
-    image: nocobase/nocobase:1.4.10
+    image: nocobase/nocobase:1.9.47
     container_name: pokeblahaj
     cpus: 0.5
     mem_limit: 768m
