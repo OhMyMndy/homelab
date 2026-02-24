@@ -1,7 +1,9 @@
 name: openwebui
 services:
   openwebui:
-    image: ghcr.io/open-webui/open-webui:0.5.14
+    image: ghcr.io/open-webui/open-webui:0.8.5
+    cpus: 0.5
+    mem_limit: 1024m
     container_name: open-webui
     volumes:
       - ./storage/open-webui:/app/backend/data
@@ -9,10 +11,18 @@ services:
       - .env
     environment:
       # SEE: https://docs.openwebui.com/tutorials/tips/reduce-ram-usage/
-      RAG_EMBEDDING_ENGINE: ollama
+      RAG_EMBEDDING_ENGINE: openai
       AUDIO_STT_ENGINE: openai
       CONTENT_EXTRACTION_ENGINE: tika
+
       TIKA_SERVER_URL: http://tika:9998
+      WEB_LOADER_ENGINE: playwright
+      RAG_WEB_LOADER_ENGINE: playwright
+      PLAYWRIGHT_WS_URI: ws://playwright:3000
+      PLAYWRIGHT_TIMEOUT: 20
+      ENABLE_WEBSOCKET_SUPPORT: true
+      # WEBSOCKET_REDIS_URL: redis://redis:6379/0
+      # WEBSOCKET_MANAGER: redis
     networks:
       - default
       - reverse-proxy
@@ -33,10 +43,10 @@ services:
       start_period: 40s
       start_interval: 5s
   tika:
-    image: apache/tika:3.1.0.0
+    image: apache/tika:3.2.3.0
+    cpus: 0.5
+    mem_limit: 512m
     container_name: open-webui-tika
-    # ports:
-    #   - "9998:9998"
     restart: unless-stopped
     healthcheck:
       test:
@@ -47,9 +57,30 @@ services:
       start_period: 40s
       start_interval: 5s
 
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.49.1-noble # Version must match requirements.txt
+    container_name: open-webui-playwright
+    restart: unless-stopped
+    command: npx -y playwright@1.49.1 run-server --port 3000 --host 0.0.0.0
+    cpus: 0.5
+    mem_limit: 2048m
+
+  # redis:
+  #   image: docker.io/valkey/valkey:8-alpine
+  #   container_name: open-webui-redis
+  #   command: redis-server --save 30 1 --loglevel warning
+  #   restart: unless-stopped
+  #   mem_limit: 256m
+  #   cpus: 0.25
+  #   volumes:
+  #     - redis-data:/data
+
   pipelines:
-    image: ghcr.io/open-webui/pipelines:git-ab9012c
+    image: ghcr.io/open-webui/pipelines:git-039f9c5
     container_name: open-webui-pipelines
+    cpus: 0.5
+    mem_limit: 512m
     volumes:
       - ./storage/pipelines:/app/pipelines
     networks:
@@ -58,12 +89,12 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
-#    labels:
-#      - "traefik.docker.network=reverse-proxy"
-#      - "traefik.http.routers.openwebui-pipelines.rule=Host(`openwebui-pipeline\
-#        s.home.ohmymndy.com`)"
-#      - "traefik.http.routers.openwebui-pipelines.tls=true"
-#      - "traefik.enable=true"
+    #    labels:
+    #      - "traefik.docker.network=reverse-proxy"
+    #      - "traefik.http.routers.openwebui-pipelines.rule=Host(`openwebui-pipeline\
+    #        s.home.ohmymndy.com`)"
+    #      - "traefik.http.routers.openwebui-pipelines.tls=true"
+    #      - "traefik.enable=true"
     healthcheck:
       test: ["CMD", "curl", "-f", "-s", "-l", "http://127.0.0.1:9099"]
       interval: 15s
@@ -80,3 +111,6 @@ networks:
   lldap:
     name: lldap_default
     external: true
+
+volumes:
+  redis-data:
