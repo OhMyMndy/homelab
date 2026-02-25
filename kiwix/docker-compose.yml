@@ -5,27 +5,27 @@ services:
     container_name: kiwix-downloader
     restart: unless-stopped
     cpus: 0.25
-    mem_limit: 512M
+    mem_limit: 1024M
     build:
       dockerfile: ./aria2/Dockerfile
     volumes:
-      - ./storage:/storage
+      - /mnt/media/kiwix:/storage
       - ./aria2/run.sh:/run.sh
       - ./aria2/complete.sh:/complete.sh
       - ./zim-list.txt:/zim-list.txt
     entrypoint: /run.sh
     user: "${PUID:?}:${PGID:?}"
   kiwix:
-    image: ghcr.io/kiwix/kiwix-serve:3.7.0
+    image: ghcr.io/kiwix/kiwix-serve:3.8.1
     container_name: kiwix
     cpus: 0.25
     mem_limit: 512M
     volumes:
-      - ./storage:/library
+      - /mnt/media/kiwix:/library
     networks:
       - default
       - reverse-proxy
-    command: "/library/*.zim --address 0.0.0.0"
+    command: "/library/*.zim" # --address 0.0.0.0"
     restart: unless-stopped
     labels:
       - "traefik.docker.network=reverse-proxy"
