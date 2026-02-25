@@ -1,6 +1,6 @@
 services:
   traefik:
-    image: traefik:v3.3.4
+    image: traefik:v3.6.9
     restart: unless-stopped
     container_name: traefik
     init: true
