@@ -1,6 +1,6 @@
 name: lldap
 x-lldap: &lldap
-  image: lldap/lldap:2024-12-24
+  image: lldap/lldap:2026-02-24
   restart: unless-stopped
   volumes:
     - "./storage/lldap:/data"
