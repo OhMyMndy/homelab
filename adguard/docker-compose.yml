@@ -1,24 +1,22 @@
-name: adguard
 services:
   app:
-    image: adguard/adguardhome:v0.107.55
+    image: adguard/adguardhome:v0.107.80
     container_name: adguard
     volumes:
       - ./storage/work:/opt/adguardhome/work
       - ./config:/opt/adguardhome/conf
     ports:
-      - "${LOCAL_IP}:53:53/tcp"
-      - "${LOCAL_IP}:53:53/udp"
-      - "${TAILSCALE_IP:?}:53:53/tcp"
-      - "${TAILSCALE_IP:?}:53:53/udp"
-    entrypoint:
-      [
-        "ash",
-        "-c",
-        'set -x; echo $#;  umask 000; exec /opt/adguardhome/AdGuardHome "$@"',
-        "--",
-      ]
+      - "${LOCAL_IP:?}:53:53/tcp"
+      - "${LOCAL_IP:?}:53:53/udp"
 
+    # entrypoint:
+    #   [
+    #     "ash",
+    #     "-c",
+    #     'set -x; echo $#;  umask 000; exec /opt/adguardhome/AdGuardHome "$@"',
+    #     "--",
+    #   ]
+    #
     networks:
       - default
       - reverse-proxy
@@ -32,6 +30,9 @@ services:
       - "traefik.http.routers.adguard.tls=true"
       - "traefik.enable=true"
     init: true
+    cpus: 0.5
+    mem_limit: 256m
+
     healthcheck:
       test:
         [
@@ -40,10 +41,12 @@ services:
           "--no-verbose",
           "--tries=1",
           "--spider",
-          "http://127.0.0.1:3000",
+          "http://127.0.0.1:80",
         ]
       interval: 30s
       timeout: 3s
+      start_period: 40s
+      start_interval: 5s
 
 networks:
   default:

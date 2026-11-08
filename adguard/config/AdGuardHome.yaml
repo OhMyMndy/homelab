@@ -2,11 +2,18 @@ http:
   pprof:
     port: 6060
     enabled: false
+  doh:
+    routes:
+      - GET /dns-query
+      - POST /dns-query
+      - GET /dns-query/{ClientID}
+      - POST /dns-query/{ClientID}
+    insecure_enabled: false
   address: 0.0.0.0:80
-  session_ttl: 720h
+  session_ttl: 30d
 users:
-  - name: OhMyMndy
-    password: $2a$10$7deNWiRXjAM.ER.NfMBfqOp1o2bfTBlWU1.dM02fRh6HsVQDi1cQu
+  - name: mandy
+    password: $2y$10$Dloov/N9EVZlC0H6Yiz5LOR/YDGXGC.3npGxbyX2j1ymlF.oQCR5q
 auth_attempts: 5
 block_auth_min: 15
 http_proxy: ""
@@ -23,16 +30,15 @@ dns:
   ratelimit_whitelist: []
   refuse_any: true
   upstream_dns:
-    - https://dns10.quad9.net/dns-query
+    - '[/home.mndy.be/]10.0.40.1'
+    - https://dns.mullvad.net/dns-query
   upstream_dns_file: ""
   bootstrap_dns:
     - 9.9.9.10
     - 149.112.112.10
     - 2620:fe::10
     - 2620:fe::fe:10
-  fallback_dns:
-    - 1.1.1.1
-    - 9.9.9.9
+  fallback_dns: []
   upstream_mode: load_balance
   fastest_timeout: 1s
   allowed_clients: []
@@ -44,10 +50,13 @@ dns:
   trusted_proxies:
     - 127.0.0.0/8
     - ::1/128
+  cache_enabled: true
   cache_size: 4194304
   cache_ttl_min: 0
   cache_ttl_max: 0
   cache_optimistic: false
+  cache_optimistic_answer_ttl: 30s
+  cache_optimistic_max_age: 12h
   bogus_nxdomain: []
   aaaa_disabled: false
   enable_dnssec: false
@@ -62,14 +71,17 @@ dns:
   bootstrap_prefer_ipv6: false
   upstream_timeout: 10s
   private_networks: []
-  use_private_ptr_resolvers: false
-  local_ptr_upstreams: []
+  use_private_ptr_resolvers: true
+  local_ptr_upstreams:
+    - 10.0.40.1
   use_dns64: false
   dns64_prefixes: []
   serve_http3: false
   use_http3_upstreams: false
   serve_plain_dns: true
   hostsfile_enabled: true
+  pending_requests:
+    enabled: true
 tls:
   enabled: false
   server_name: ""
@@ -79,7 +91,6 @@ tls:
   port_dns_over_quic: 853
   port_dnscrypt: 0
   dnscrypt_config_file: ""
-  allow_unencrypted_doh: false
   certificate_chain: ""
   private_key: ""
   certificate_path: ""
@@ -88,15 +99,17 @@ tls:
 querylog:
   dir_path: ""
   ignored: []
-  interval: 8760h
+  interval: 90d
   size_memory: 1000
   enabled: true
+  ignored_enabled: false
   file_enabled: true
 statistics:
   dir_path: ""
   ignored: []
-  interval: 8760h
+  interval: 90d
   enabled: true
+  ignored_enabled: false
 filters:
   - enabled: true
     url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt
@@ -131,7 +144,9 @@ filters:
     name: Huge AI block list
     id: 1707668042
 whitelist_filters: []
-user_rules: []
+user_rules:
+  - '@@||instagram.com^'
+  - '@@||reddit.com^'
 dhcp:
   enabled: false
   interface_name: ""
@@ -175,7 +190,7 @@ filtering:
   safe_search:
     enabled: true
     bing: false
-    duckduckgo: false
+    duckduckgo: true
     ecosia: true
     google: false
     pixabay: false
@@ -187,6 +202,7 @@ filtering:
   rewrites: []
   safe_fs_patterns:
     - /opt/adguardhome/work/data/userfilters/*
+  max_http_size: 256MB
   safebrowsing_cache_size: 1048576
   safesearch_cache_size: 1048576
   parental_cache_size: 1048576
@@ -194,6 +210,7 @@ filtering:
   filters_update_interval: 24
   blocked_response_ttl: 10
   filtering_enabled: true
+  rewrites_enabled: true
   parental_enabled: false
   safebrowsing_enabled: true
   protection_enabled: true
@@ -218,4 +235,4 @@ os:
   group: ""
   user: ""
   rlimit_nofile: 0
-schema_version: 29
+schema_version: 34
