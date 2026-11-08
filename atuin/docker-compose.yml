@@ -1,0 +1,83 @@
+name: atuin
+services:
+  atuin:
+    restart: unless-stopped
+    image: ghcr.io/atuinsh/atuin:18.24.5
+    command: start
+    cpus: 0.5
+    mem_limit: 256m
+    volumes:
+      - "./config:/config"
+    # ports:
+    # - 8888:8888
+    environment:
+      ATUIN_HOST: "0.0.0.0"
+      ATUIN_OPEN_REGISTRATION: "false"
+      ATUIN_DB_URI: postgres://${ATUIN_DB_USERNAME:?}:${ATUIN_DB_PASSWORD:?}@db/${ATUIN_DB_NAME:?}
+      RUST_LOG: info,atuin_server=debug
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - default
+      - reverse-proxy
+    healthcheck:
+      # 22B8 is 8888 in hex
+      test:
+        [
+          "CMD-SHELL",
+          "grep -qsE ':22B8 [0-9A-F:]+ 0A' /proc/net/tcp /proc/net/tcp6",
+        ]
+      interval: 30s
+      timeout: 2s
+      retries: 3
+      start_period: 30s
+      start_interval: 5s
+    labels:
+      - "traefik.http.routers.atuin.rule=Host(`atuin.home.ohmymndy.com`)"
+      - "traefik.http.services.atuin.loadbalancer.server.port=8888"
+      - "traefik.http.routers.atuin.tls=true"
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.enable=true"
+    init: true
+
+  db:
+    image: postgres:18
+    user: "${PUID:?}:${PGID:?}"
+    restart: unless-stopped
+    volumes: # Don't remove permanent storage for index database files!
+      - "./storage/database:/var/lib/postgresql/"
+    environment:
+      POSTGRES_USER: ${ATUIN_DB_USERNAME:?}
+      POSTGRES_PASSWORD: ${ATUIN_DB_PASSWORD:?}
+      POSTGRES_DB: ${ATUIN_DB_NAME:?}
+    cpus: 0.5
+    mem_limit: 256m
+    healthcheck:
+      test:
+        ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:?} -d $${POSTGRES_DB:?}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+  # backup:
+  #   container_name: atuin_db_dumper
+  #   image: prodrigestivill/postgres-backup-local
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     POSTGRES_HOST: postgresql
+  #     POSTGRES_DB: ${ATUIN_DB_NAME}
+  #     POSTGRES_USER: ${ATUIN_DB_USERNAME}
+  #     POSTGRES_PASSWORD: ${ATUIN_DB_PASSWORD}
+  #     SCHEDULE: "@daily"
+  #     BACKUP_DIR: /db_dumps
+  #   volumes:
+  #     - ./db_dumps:/db_dumps
+  #   depends_on:
+  #     - postgresql
+networks:
+  default:
+  reverse-proxy:
+    name: reverse-proxy
+    external: true
