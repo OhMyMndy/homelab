@@ -9,10 +9,10 @@ services:
     build:
       dockerfile: ./aria2/Dockerfile
     volumes:
-      - /mnt/media/kiwix:/storage
-      - ./aria2/run.sh:/run.sh
-      - ./aria2/complete.sh:/complete.sh
-      - ./zim-list.txt:/zim-list.txt
+      - /mnt/media/kiwix:/library
+      - ./aria2/run.sh:/run.sh:ro
+      - ./aria2/complete.sh:/complete.sh:ro
+      - ./zim-list.txt:/zim-list.txt:ro
     entrypoint: /run.sh
     user: "${PUID:?}:${PGID:?}"
   kiwix:
@@ -22,10 +22,12 @@ services:
     mem_limit: 512M
     volumes:
       - /mnt/media/kiwix:/library
+      - ./kiwix-entrypoint.sh:/entrypoint.sh
     networks:
       - default
       - reverse-proxy
-    command: "/library/*.zim" # --address 0.0.0.0"
+    # command: "/library/*.zim" # --address 0.0.0.0"
+    entrypoint: /entrypoint.sh
     restart: unless-stopped
     labels:
       - "traefik.docker.network=reverse-proxy"
