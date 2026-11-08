@@ -3,9 +3,10 @@
 .idea
 .history
 */storage/*
+*/storage*
 .env*
 *.log
-
+*.cache
 acme.json*
 docker-compose.override.yml
 !.keep
@@ -17,7 +18,7 @@ __pycache__
 *.tfvars
 .bw-token
 *-bak
-
+*_bak
 
 terraform.tfvars
 .terraform.lock.hcl
@@ -26,3 +27,19 @@ tmp/
 ansible-inventory.yml
 *.plan
 *.bak
+
+# gitignore WIP projects
+/terraform
+
+/archivebox
+/backups
+/backup
+
+/code-server
+/codimd
+/frigate
+/jupyterhub
+/kestra
+/langfuses
+/suricata
+/matrix
