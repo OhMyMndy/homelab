@@ -1,0 +1,165 @@
+logging {
+  level = "info"
+}
+
+
+// PROMETHEUS NODE-EXPORTER
+prometheus.exporter.unix "default" {
+  include_exporter_metrics = true
+  disable_collectors       = ["mdadm"]
+}
+
+prometheus.scrape "default" {
+  targets = array.concat(
+    prometheus.exporter.unix.default.targets,
+    [{
+      // Self-collect metrics
+      job         = "alloy",
+      __address__ = "127.0.0.1:12345",
+    }],
+  )
+  forward_to = [
+    //prometheus.remote_write.endpoint.receiver,
+    prometheus.relabel.instance.receiver,
+  ]
+}
+
+prometheus.relabel "instance" {
+  forward_to = [prometheus.remote_write.endpoint.receiver]
+
+  rule {
+    target_label  = "instance"
+    replacement   = sys.env("HOST_HOSTNAME")
+  }
+}
+// PROMETHEUS NODE-EXPORTER
+
+
+// DOCKER
+// Discover Docker containers and extract metadata.
+discovery.docker "linux" {
+  host = "unix:///var/run/docker.sock"
+}
+
+// Define a relabeling rule to create a service name from the container name.
+discovery.relabel "logs_integrations_docker" {
+      targets = []
+  
+      rule {
+          source_labels = ["__meta_docker_container_name"]
+          regex = "/(.*)"
+          target_label = "container_name"
+      }
+
+  rule {
+    target_label  = "instance"
+    replacement   = sys.env("HOST_HOSTNAME")
+  }
+
+}
+loki.source.docker "default" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.docker.linux.targets
+  relabel_rules = discovery.relabel.logs_integrations_docker.rules
+  forward_to = [loki.process.docker_logs.receiver]
+}
+
+// Process and filter Docker logs before sending to Loki.
+// Example: Drop logs from infrastructure containers.
+// Modify the regex pattern to match container names you want to exclude.
+loki.process "docker_logs" {
+  forward_to = [loki.write.endpoint.receiver]
+
+  stage.drop {
+    source     = "container_name"
+    expression = "(alloy|grafana|loki)"
+  }
+}
+// END DOCKER
+
+// CADVISOR
+prometheus.exporter.cadvisor "containers" {
+  docker_host = "unix:///var/run/docker.sock"
+
+  // Optional: only collect the most useful metrics to keep cardinality down
+  //enabled_metrics = [
+  //]
+}
+
+prometheus.scrape "cadvisor" {
+  targets         = prometheus.exporter.cadvisor.containers.targets
+  forward_to      = [prometheus.relabel.instance.receiver]
+  scrape_interval = "30s"
+}
+// CADVISOR
+
+// OMADA EXPORTER
+prometheus.scrape "omada_exporter" {
+  targets = [
+    {"__address__" = "omada_exporter:9202"},
+  ]
+
+  forward_to      = [prometheus.remote_write.endpoint.receiver]
+  job_name        = "omada_exporter"
+  scrape_interval = "30s"
+  scrape_timeout  = "30s"
+}
+// END OMADA EXPORTER
+
+
+// JOURNAL
+loki.relabel "journal" {
+  forward_to = []
+
+  rule {
+    source_labels = ["__journal__systemd_unit"]
+    target_label  = "unit"
+  }
+  
+  rule {
+    source_labels = ["__journal__hostname"]
+    target_label  = "hostname"
+  }
+
+  rule {
+    source_labels = ["__journal_priority_keyword"]
+    target_label  = "level"
+  }
+}
+
+loki.source.journal "read"  {
+  forward_to    = [loki.write.endpoint.receiver]
+  relabel_rules = loki.relabel.journal.rules
+  labels        = {component = "loki.source.journal"}
+  path = "/var/log/journal"
+}
+// END JOURNAL
+
+
+
+loki.write "endpoint" {
+  endpoint {
+    url ="http://loki:3100/loki/api/v1/push"
+
+    basic_auth {
+      username = "loki"
+      password = sys.env("LOKI_PASS")
+    }
+  }
+}
+
+
+
+prometheus.remote_write "endpoint" {
+  endpoint {
+    url = "http://victoriametrics:8428/api/v1/write"
+
+    basic_auth {
+      username = "prometheus"
+      password = sys.env("PROMETHEUS_PASS")
+    }
+
+  }
+}
+
+

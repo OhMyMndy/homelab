@@ -1,7 +1,8 @@
 name: monitoring
 services:
   grafana:
-    image: grafana/grafana:11.4.0
+    # image: grafana/grafana:12.3.4
+    image: grafana/grafana:13.1.0-25644485979-ubuntu
     container_name: grafana
     volumes:
       - ./storage/grafana:/var/lib/grafana
@@ -9,6 +10,7 @@ services:
       - ./grafana/ldap.toml:/etc/grafana/ldap.toml:ro
     environment:
       - GF_RENDERING_SERVER_URL=http://grafana-image-renderer:8081/render
+      - GF_RENDERING_RENDERER_TOKEN=${GF_RENDERING_RENDERER_TOKEN:?}
       - GF_RENDERING_CALLBACK_URL=http://grafana:3000/
       - GF_AUTH_LDAP_ENABLED=true
       - GF_AUTH_LDAP_CONFIG_FILE=/etc/grafana/ldap.toml
@@ -18,9 +20,12 @@ services:
       - GF_LDAP_PORT=${GF_LDAP_PORT:?}
       - GF_LDAP_USER=${GF_LDAP_USER:?}
       - GF_LDAP_PASS=${GF_LDAP_PASS:?}
-      - GF_INSTALL_PLUGINS=https://github.com/VictoriaMetrics/victoriametrics-datasource/releases/download/v0.10.3/victoriametrics-datasource-v0.10.3.zip;victoriametrics-datasource
+      - GF_INSTALL_PLUGINS=https://github.com/VictoriaMetrics/victoriametrics-datasource/releases/download/v0.10.3/victoriametrics-datasource-v0.10.3.zip;victoriametrics-datasource,yesoreyeram-infinity-datasource
+        #,https://github.com/jdbranham/grafana-diagram/releases/download/v1.10.4/jdbranham-diagram-panel-1.10.4.zip;diagram-panel
       - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=victoriametrics-datasource
     restart: unless-stopped
+    cpus: 1
+    mem_limit: 1G
     networks:
       - default
       - reverse-proxy
@@ -39,109 +44,194 @@ services:
       start_interval: 5s
 
   grafana-image-renderer:
-    image: grafana/grafana-image-renderer:3.11.6
+    #image: grafana/grafana-image-renderer:3.11.6
+    image: grafana/grafana-image-renderer:v5.8.3
     container_name: grafana-image-renderer
     restart: unless-stopped
+    cpus: 0.25
+    mem_limit: 256m
     environment:
       ENABLE_METRICS: "true"
+      AUTH_TOKEN: "${GF_RENDERING_RENDERER_TOKEN:?}"
 
   # loki:
   #   image: grafana/loki:3.3.2
   #   restart: unless-stopped
   #
   #
+
   #
-  vmagent:
-    container_name: vmagent
-    image: victoriametrics/vmagent:v1.108.1
-    depends_on:
-      - "victoriametrics"
-    environment:
-      - PVE_PROMETHEUS_PASSWORD=${PVE_PROMETHEUS_PASSWORD:?}
-    volumes:
-      - ./storage/vmagentdata:/vmagentdata
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-    command:
-      - "--promscrape.config=/etc/prometheus/prometheus.yml"
-      - "--remoteWrite.url=http://victoriametrics:8428/api/v1/write"
-    restart: unless-stopped
-    extra_hosts:
-      - host.docker.internal:host-gateway
+  # vmagent:
+  #   container_name: vmagent
+  #   image: victoriametrics/vmagent:v1.108.1
+  #   depends_on:
+  #     - "victoriametrics"
+  #   environment:
+  #     - PVE_PROMETHEUS_PASSWORD=${PVE_PROMETHEUS_PASSWORD:?}
+  #   volumes:
+  #     - ./storage/vmagentdata:/vmagentdata
+  #     - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  #   command:
+  #     - "--promscrape.config=/etc/prometheus/prometheus.yml"
+  #     - "--remoteWrite.url=http://victoriametrics:8428/api/v1/write"
+  #   restart: unless-stopped
+  #   cpus: 0.2
+  #   mem_limit: 100m
+  #   extra_hosts:
+  #     - host.docker.internal:host-gateway
 
   victoriametrics:
-    image: victoriametrics/victoria-metrics:v1.108.1
+    image: victoriametrics/victoria-metrics:v1.136.0
     container_name: victoriametrics
     restart: unless-stopped
     volumes:
       - ./storage/victoriametrics:/storage
     command:
       - "--storageDataPath=/storage"
+    # ports:
+    # - 8428:8428
     # depends_on:
     #   - cadvisor
     networks:
       - default
       - reverse-proxy
-    # labels:
-    #   - "traefik.docker.network=reverse-proxy"
-    #   - "traefik.http.routers.prometheus.rule=Host(`prometheus.home.ohmymndy.com`)"
-    #   - "traefik.http.routers.prometheus.tls=true"
-    #   - "traefik.enable=true"
+    cpus: 1
+    mem_limit: 2048m
+    labels:
+      - "traefik.docker.network=reverse-proxy"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.home.ohmymndy.com`)"
+      - "traefik.http.routers.prometheus.tls=true"
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus.middlewares=prometheus-auth"
+      - "traefik.http.middlewares.prometheus-auth.basicauth.users=${PROMETHEUS_AUTH:?}"
   #
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.49.2
-    container_name: cadvisor
-    privileged: true
-    command:
-      - --docker_only=true
-      - --store_container_labels=false
-      - --enable_metrics=cpu,diskIO,memory,network # advtcp,app,cpu,cpuLoad,cpu_topology,cpuset,disk,diskIO,hugetlb,memory,memory_numa,network,oom_event,percpu,perf_event,process,referenced_memory,resctrl,sched,tcp,udp
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /dev/disk:/dev/disk:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-    devices:
-      - /dev/kmsg
+  # cadvisor:
+  #   image: ghcr.io/google/cadvisor:0.56.2
+  #   container_name: cadvisor
+  #   privileged: true
+  #   command:
+  #     - --docker_only=true
+  #     - --store_container_labels=false
+  #     - --enable_metrics=cpu,diskIO,memory,network
+  #     # advtcp,app,cpu,cpuLoad,cpu_topology,cpuset,disk,diskIO,hugetlb,memory,memory_numa,
+  #     # network,oom_event,percpu,perf_event,process,referenced_memory,resctrl,sched,tcp,udp
+  #   cpus: 0.25
+  #   mem_limit: 128m
+  #   volumes:
+  #     - /:/rootfs:ro
+  #     - /var/run:/var/run:ro
+  #     - /sys:/sys:ro
+  #     - /dev/disk:/dev/disk:ro
+  #     - /var/lib/docker/:/var/lib/docker:ro
+  #   devices:
+  #     - /dev/kmsg
+  #   restart: unless-stopped
+  #   networks:
+  #     - default
+  #   #   - reverse-proxy
+  #   # labels:
+  #   #   - "traefik.docker.network=reverse-proxy"
+  #   #   - "traefik.http.routers.cadvisor.rule=Host(`cadvisor.home.ohmymndy.com`)"
+  #   #   - "traefik.http.routers.cadvisor.tls=true"
+  #   #   - "traefik.enable=true"
+  #   healthcheck:
+  #     test:
+  #       ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/containers"]
+  #     interval: 30s
+  #     timeout: 3s
+  #     retries: 3
+  #     start_period: 40s
+  #     start_interval: 5s
+
+  # node-exporter:
+  #   image: prom/node-exporter:v1.11.1-distroless
+  #   container_name: node-exporter
+  #   network_mode: host
+  #   pid: host
+  #   restart: unless-stopped
+  #   cpus: 0.5
+  #   mem_limit: 50m
+  #   volumes:
+  #     - "/:/host:ro,rslave"
+  #   command:
+  #     - --collector.disable-defaults
+  #     - "--path.rootfs=/host"
+  #     - --collector.cpu
+  #     - --collector.meminfo
+  #     - --collector.filesystem
+  #     # - --collector.netdev
+  #   # volumes:
+  #   #   - /proc:/host/proc:ro
+  #   #   - /sys:/host/sys:ro
+  #   #   - /:/rootfs:ro
+  #   # command:
+  #   #   - "--path.procfs=/host/proc"
+  #   #   - "--path.rootfs=/rootfs"
+  #   #   - "--path.sysfs=/host/sys"
+  #   #   - "--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)"
+  #   # restart: unless-stopped
+
+  ## Logs
+  #
+  loki:
+    image: grafana/loki:3.7
+    container_name: loki
     restart: unless-stopped
+    cpus: 1
+    mem_limit: 1024m
+    command:
+      - -config.file=/etc/loki/loki.yaml
+    volumes:
+      - ./loki/loki.yaml:/etc/loki/loki.yaml
+      - ./storage/loki:/loki
+    user: ${PUID:?}:${PGID:?}
     networks:
       - default
       - reverse-proxy
     labels:
       - "traefik.docker.network=reverse-proxy"
-      - "traefik.http.routers.cadvisor.rule=Host(`cadvisor.home.ohmymndy.com`)"
-      - "traefik.http.routers.cadvisor.tls=true"
+      - "traefik.http.routers.loki.rule=Host(`loki.home.ohmymndy.com`)"
+      - "traefik.http.services.loki.loadbalancer.server.port=3100"
+      - "traefik.http.routers.loki.tls=true"
       - "traefik.enable=true"
-    healthcheck:
-      test:
-        ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/containers"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-      start_period: 40s
-      start_interval: 5s
+      - "traefik.http.routers.loki.middlewares=loki-auth"
+      - "traefik.http.middlewares.loki-auth.basicauth.users=${LOKI_AUTH:?}"
+    # healthcheck:
+    #   test: wget --quiet --tries=1 --output-document=- http://localhost:3100/ready || exit 1
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 5
+    #   start_period: 60s
+    #   start_interval: 5s
 
-  node-exporter:
-    image: prom/node-exporter:v1.8.2
-    container_name: node-exporter
-    command:
-      - "--path.rootfs=/host"
-    network_mode: host
-    pid: host
+  alloy:
+    image: grafana/alloy:v1.16.1
+    container_name: alloy
     restart: unless-stopped
+    cpus: 0.4
+    mem_limit: 1024m
+    networks:
+      - default
+      - omada_exporter
+    command:
+      [
+        "run",
+        "--server.http.listen-addr=0.0.0.0:12345",
+        "--storage.path=/var/lib/alloy/data",
+        "/etc/alloy/config.alloy",
+      ]
+    env_file:
+      - .env
     volumes:
-      - "/:/host:ro,rslave"
-    # volumes:
-    #   - /proc:/host/proc:ro
-    #   - /sys:/host/sys:ro
-    #   - /:/rootfs:ro
-    # command:
-    #   - "--path.procfs=/host/proc"
-    #   - "--path.rootfs=/rootfs"
-    #   - "--path.sysfs=/host/sys"
-    #   - "--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)"
-    # restart: unless-stopped
-
+      - ./alloy/config.alloy:/etc/alloy/config.alloy
+      - ./storage/alloy:/var/lib/alloy/data
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/log:/var/log
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
 networks:
   default:
   reverse-proxy:
@@ -150,3 +240,6 @@ networks:
   lldap:
     name: lldap_default
     external: true
+  omada_exporter:
+    external: true
+    name: omada_exporter_default
