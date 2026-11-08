@@ -1,12 +1,14 @@
 name: vaultwarden
 services:
   vaultwarden:
-    image: vaultwarden/server:1.35.4
+    image: vaultwarden/server:1.37.5
     cpus: 0.5
     mem_limit: 256m
     container_name: vaultwarden
     volumes:
       - ./storage/vaultwarden:/data/:rw
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     environment:
       - ADMIN_TOKEN=${BITWARDEN_ADMIN_TOKEN:?}
       - SMTP_HOST=${SMTP_HOST:?}
