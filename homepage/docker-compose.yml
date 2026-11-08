@@ -3,6 +3,8 @@ services:
   dockerproxy:
     image: ghcr.io/tecnativa/docker-socket-proxy:0.3.0
     container_name: dockerproxy
+    cpus: 0.25
+    mem_limit: 32m
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
@@ -15,6 +17,8 @@ services:
     image: ghcr.io/gethomepage/homepage:v0.9.13
     restart: unless-stopped
     container_name: homepage
+    cpus: 0.25
+    mem_limit: 128m
     volumes:
       - ./config:/app/config
     environment:
