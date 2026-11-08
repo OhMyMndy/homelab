@@ -8,24 +8,21 @@ services:
       - redis:/data
     mem_limit: 256M
     cpus: 0.25
-    # cap_drop:
-    #   - ALL
-    # cap_add:
-    #   - SETGID
-    #   - SETUID
-    #   - DAC_OVERRIDE
-    # logging:
-    #   driver: "json-file"
-    #   options:
-    #     max-size: "1m"
-    #     max-file: "1"
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETGID
+      - SETUID
+      - DAC_OVERRIDE
 
   searxng:
-    image: docker.io/searxng/searxng:latest
+    image: docker.io/searxng/searxng:2026.11.8-74418092d
     container_name: searxng
     restart: unless-stopped
     volumes:
-      - searxng:/etc/searxng:rw
+      - ./searxng:/etc/searxng:rw
+    group_add:
+      - 1000
     environment:
       - SEARXNG_BASE_URL=https://searxng.home.ohmymndy.com
       - UWSGI_WORKERS=${SEARXNG_UWSGI_WORKERS:-4}
@@ -58,4 +55,3 @@ networks:
 
 volumes:
   redis:
-  searxng:
