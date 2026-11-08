@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/tt-rss/tt-rss:20260209-183630 
+    image: ghcr.io/tt-rss/tt-rss:20260209-183630
     container_name: tt-rss
     cpus: 0.5
     mem_limit: 256m
@@ -20,7 +20,7 @@ services:
   #  optional, makes weekly backups of your install
   # backups:
   #   # image: cthulhoo/ttrss-fpm-pgsql-static:eb470473
-  #   image: ghcr.io/tt-rss/tt-rss:20260209-183630 
+  #   image: ghcr.io/tt-rss/tt-rss:20260209-183630
   #   container_name: tt-rss-backups
   #   cpus: 0.5
   #   mem_limit: 256m
@@ -55,7 +55,8 @@ services:
     init: true
 
   rss-proxy:
-    image: php:8.2-apache
+    image: php:8.3-apache
+    restart: unless-stopped
     volumes:
       - ./proxy:/var/www/html/:ro
     mem_limit: 64m
@@ -86,7 +87,8 @@ services:
 
   updater:
     # image: cthulhoo/ttrss-fpm-pgsql-static:eb470473
-    image: ghcr.io/tt-rss/tt-rss:20260209-183630 
+    # image: ghcr.io/tt-rss/tt-rss:20260209-183630
+    image: ghcr.io/tt-rss/tt-rss:20261106-122512
     container_name: tt-rss-updater
     cpus: 0.25
     mem_limit: 256m
@@ -105,7 +107,8 @@ services:
 
   web-nginx:
     # image: cthulhoo/ttrss-web-nginx:472058e0
-    image: ghcr.io/tt-rss/tt-rss-web-nginx:20260209-183630
+    # image: ghcr.io/tt-rss/tt-rss-web-nginx:20260209-183630
+    image: ghcr.io/tt-rss/tt-rss-web-nginx:20261106-122512
     container_name: tt-rss-nginx
     cpus: 0.25
     mem_limit: 128m
