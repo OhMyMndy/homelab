@@ -1,6 +1,6 @@
 services:
   smtprelay:
-    image: grafana/smtprelay:2.1.5
+    image: grafana/smtprelay:2.5.4
     container_name: smtprelay
     restart: unless-stopped
     init: true
@@ -14,8 +14,11 @@ services:
       - -hostname=smtprelay
       - -listen=${LISTEN:?}
       - -allowed_nets=${ALLOWED_NETS:-}
+      - -log_level=DEBUG
     ports:
       - 127.0.0.1:25:25
+    environment:
+      OTEL_SDK_DISABLED: true
 
 networks:
   default:
