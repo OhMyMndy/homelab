@@ -1,7 +1,7 @@
 name: wallabag
 services:
   wallabag:
-    image: wallabag/wallabag:2.6.10
+    image: wallabag/wallabag:2.6.15.1
     container_name: wallabag
     restart: unless-stopped
     volumes:
