@@ -1,0 +1,9 @@
+services:
+  app:
+    image: ohmymndy/vdirsyncer:0.1
+    build:
+      context: .
+    volumes:
+      - ./config:/home/mandy/.config/vdirsyncer/config:ro
+      - ./storage:/home/mandy/.vdirsyncer
+      - ./entrypoint.sh:/entrypoint.sh:ro
