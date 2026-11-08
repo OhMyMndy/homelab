@@ -1,0 +1,27 @@
+services:
+  mc:
+    image: itzg/minecraft-server
+    tty: true
+    init: true
+    restart: unless-stopped
+    container_name: minecraft-skyblock
+    cpus: 3
+    mem_limit: 4400m
+    stdin_open: true
+    ports:
+      - "25567:25565"
+    environment:
+      EULA: "TRUE" # MODPACK_PLATFORM: AUTO_CURSEFORGE
+      # Allocate API key from https://console.curseforge.com/
+      # and set in .env file making sure to double up dollar signs, such as
+      # CF_API_KEY=$$2a$$10$$....
+      # Refer to https://docker-minecraft-server.readthedocs.io/en/latest/types-and-platforms/mod-platforms/auto-curseforge/#api-key
+      # CF_API_KEY: ${CF_API_KEY:?}
+      #  CF_SLUG: better-mc-forge-bmc4
+      #      CF_FILENAME_MATCHER: v18.5
+      WORLD: https://nc.skyblock.net/download/world/skyblock-2.1
+      VERSION: 1.21.4
+      MEMORY: 4G
+    volumes:
+      # attach the relative directory 'data' to the container's /data path
+      - ./storage/minecraft-server:/data
