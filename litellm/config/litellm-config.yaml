@@ -1,117 +1,97 @@
 litellm_settings:
-  json_logs: true
+  json_logs: false
 general_settings:
   disable_master_key_return: true
 model_list:
+  # - model_name: "macmini/ollama/qwen3.5:9b"
+  #   litellm_params:
+  #     model: "ollama/qwen3.5:9b"
+  #     api_base: http://10.0.40.51:11434
+  #     api_key: 2bb4f3d97e6df6464666c6da214b321924ab91c3af25bee5244156a171b4c547f67fb32e73e759d09f5cc687c212ba74
+  #
+  # - model_name: "kangaroot-gpu/ollama/gpt-oss:20b"
+  #   litellm_params:
+  #     model: "ollama/gpt-oss:20b"
+  #     api_base: http://78.46.88.7:11434
+  #     api_key: E97j1ua6Pjcs1odMgzxRMRCJPUa2frtJgsN1aOe
+  # - model_name: "kangaroot-gpu/ollama/qwen3.5:27b"
+  #   litellm_params:
+  #     model: "ollama/qwen3.5:27b"
+  #     api_base: http://78.46.88.7:11434
+  #     api_key: E97j1ua6Pjcs1odMgzxRMRCJPUa2frtJgsN1aOe
+  # - model_name: "kangaroot-gpu/ollama/qwen3.5:9b"
+  #   litellm_params:
+  #     model: "ollama/qwen3.5:9b"
+  #     api_base: http://78.46.88.7:11434
+  #     api_key: E97j1ua6Pjcs1odMgzxRMRCJPUa2frtJgsN1aOe
+  # - model_name: "kangaroot-gpu/ollama/glm-4.7-flash:q4_K_M"
+  #   litellm_params:
+  #     model: "ollama/glm-4.7-flash:q4_K_M"
+  #     api_base: http://78.46.88.7:11434
+  #     api_key: E97j1ua6Pjcs1odMgzxRMRCJPUa2frtJgsN1aOe
+  # - model_name: "kangaroot-gpu/ollama/qwen3-coder:30b"
+  #   litellm_params:
+  #     model: "ollama/qwen3-coder:30b"
+  #     api_base: http://78.46.88.7:11434
+  #     api_key: E97j1ua6Pjcs1odMgzxRMRCJPUa2frtJgsN1aOe
+  # - model_name: "kangaroot-gpu/ollama/qwen2.5-coder:14b"
+  #   litellm_params:
+  #     model: "ollama/qwen2.5-coder:14b"
+  #     api_base: http://78.46.88.7:11434
+  #     api_key: E97j1ua6Pjcs1odMgzxRMRCJPUa2frtJgsN1aOe
 
-  - model_name: "deepseek/deepseek-r1"
+  - model_name: "cohere/embed-5-fast"
     litellm_params:
-      model: "openrouter/deepseek/deepseek-r1"
+      model: "openrouter/cohere/embed-5-fast"
       api_key: os.environ/OPENROUTER_API_KEY
       tags: ["paid"]
 
 
-  - model_name: "google/gemini-2.0-flash-001"
+  - model_name: "deepseek/deepseek-v4.1-flash-1017"
     litellm_params:
-      model: "openrouter/google/gemini-2.0-flash-001"
+      model: "openrouter/deepseek/deepseek-v4.1-flash-1017"
       api_key: os.environ/OPENROUTER_API_KEY
       tags: ["paid"]
 
 
-  - model_name: "google/gemini-2.5-pro-preview-03-25"
+  - model_name: "google/gemini-3.8-flash"
     litellm_params:
-      model: "openrouter/google/gemini-2.5-pro-preview-03-25"
+      model: "openrouter/google/gemini-3.8-flash"
       api_key: os.environ/OPENROUTER_API_KEY
       tags: ["paid"]
 
 
-  - model_name: "meta-llama/llama-3.1-8b-instruct"
+  - model_name: "minimax/minimax-m3.1-flash"
     litellm_params:
-      model: "openrouter/meta-llama/llama-3.1-8b-instruct"
+      model: "openrouter/minimax/minimax-m3.1-flash"
       api_key: os.environ/OPENROUTER_API_KEY
       tags: ["paid"]
 
 
-  - model_name: "mistral/ministral-8b"
+  - model_name: "mistralai/ministral-14b-2512"
     litellm_params:
-      model: "openrouter/mistral/ministral-8b"
+      model: "openrouter/mistralai/ministral-14b-2512"
       api_key: os.environ/OPENROUTER_API_KEY
       tags: ["paid"]
 
 
-  - model_name: "mistralai/mistral-large-2411"
+  - model_name: "openai/gpt-5.6-terra"
     litellm_params:
-      model: "openrouter/mistralai/mistral-large-2411"
+      model: "openrouter/openai/gpt-5.6-terra"
       api_key: os.environ/OPENROUTER_API_KEY
       tags: ["paid"]
 
 
-  - model_name: "mistralai/mistral-nemo"
+  - model_name: "openrouter/auto"
     litellm_params:
-      model: "openrouter/mistralai/mistral-nemo"
+      model: "openrouter/openrouter/auto"
       api_key: os.environ/OPENROUTER_API_KEY
       tags: ["paid"]
 
 
-  - model_name: "openai/gpt-4.1"
+  - model_name: "openrouter/auto-code"
     litellm_params:
-      model: "openrouter/openai/gpt-4.1"
-      api_key: os.environ/OPENROUTER_API_KEY
-      tags: ["paid"]
-
-
-  - model_name: "openai/gpt-4.1-mini"
-    litellm_params:
-      model: "openrouter/openai/gpt-4.1-mini"
-      api_key: os.environ/OPENROUTER_API_KEY
-      tags: ["paid"]
-
-
-  - model_name: "openai/gpt-4.1-nano"
-    litellm_params:
-      model: "openrouter/openai/gpt-4.1-nano"
-      api_key: os.environ/OPENROUTER_API_KEY
-      tags: ["paid"]
-
-
-  - model_name: "openai/gpt-4o-2024-11-20"
-    litellm_params:
-      model: "openrouter/openai/gpt-4o-2024-11-20"
-      api_key: os.environ/OPENROUTER_API_KEY
-      tags: ["paid"]
-
-
-  - model_name: "openai/o1-mini"
-    litellm_params:
-      model: "openrouter/openai/o1-mini"
-      api_key: os.environ/OPENROUTER_API_KEY
-      tags: ["paid"]
-
-
-  - model_name: "openai/o1-mini-2024-09-12"
-    litellm_params:
-      model: "openrouter/openai/o1-mini-2024-09-12"
-      api_key: os.environ/OPENROUTER_API_KEY
-      tags: ["paid"]
-
-
-  - model_name: "openai/o1-pro"
-    litellm_params:
-      model: "openrouter/openai/o1-pro"
-      api_key: os.environ/OPENROUTER_API_KEY
-      tags: ["paid"]
-
-
-  - model_name: "openai/o3-mini"
-    litellm_params:
-      model: "openrouter/openai/o3-mini"
-      api_key: os.environ/OPENROUTER_API_KEY
-      tags: ["paid"]
-
-
-  - model_name: "openai/o3-mini-high"
-    litellm_params:
-      model: "openrouter/openai/o3-mini-high"
+      model: "openrouter/openrouter/auto-code"
       api_key: os.environ/OPENROUTER_API_KEY
       tags: ["paid"]
 

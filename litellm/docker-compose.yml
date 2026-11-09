@@ -2,7 +2,7 @@ name: litellm
 services:
   db:
     image: postgres:16
-    container_name: litellm-postgresqc
+    container_name: litellm-postgresql
     volumes:
       - ./storage/postgres:/var/lib/postgresql/data
     environment:
@@ -11,6 +11,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
     command: postgres -c wal_level=logical
     restart: unless-stopped
+    cpus: 0.5
+    mem_limit: 512m
     healthcheck:
       test:
         ["CMD-SHELL", "pg_isready -d ${POSTGRES_DB:?} -U ${POSTGRES_USER:?}"]
@@ -32,22 +34,25 @@ services:
       - ./templates:/templates
 
   litellm:
-    image: ghcr.io/berriai/litellm:main-v1.65.1-nightly
+    # image: ghcr.io/berriai/litellm:v1.83.0-nightly
+    image: ghcr.io/berriai/litellm:v1.108.3-lts
     container_name: litellm
-    cpus: 0.25
-    mem_limit: 512m
+    cpus: 0.5
+    mem_limit: 1024m
     volumes:
       - ./config/litellm-config.yaml:/app/config.yaml
     depends_on:
       init:
         condition: service_completed_successfully
+      db:
+        condition: service_healthy
     environment:
       DATABASE_URL: "postgresql://${POSTGRES_USER:?}:${POSTGRES_PASSWORD:?}@db:5432/${POSTGRES_DB:?}"
-      STORE_MODEL_IN_DB: "False" # allows adding models to proxy via UI
+      STORE_MODEL_IN_DB: "True" # False" # allows adding models to proxy via UI
       LITELLM_MASTER_KEY: "${LITELLM_MASTER_KEY:?}"
       LITELLM_SALT_KEY: "${LITELLM_SALT_KEY:?}"
       OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:?}"
-      LITELLM_LOG: "INFO"
+      #LITELLM_LOG: "INFO"
     networks:
       - default
       - reverse-proxy
@@ -62,11 +67,14 @@ services:
     healthcheck:
       test:
         ["CMD-SHELL", "bash", "-c", "cat < /dev/null > /dev/tcp/127.0.0.1/4000"]
-      interval: 1m
-      timeout: 1s
-      retries: 3
-      start_period: 30s
-      start_interval: 1s
+    # healthcheck: # Defines the health check configuration for the container
+    #   test:
+    #     - CMD-SHELL
+    #     - python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:4000/health/liveliness')" # Command to execute for health check
+    #   interval: 30s # Perform health check every 30 seconds
+    #   timeout: 10s # Health check command times out after 10 seconds
+    #   retries: 3 # Retry up to 3 times if health check fails
+    #   start_period: 40s # Wait 40 seconds after container start before beginning health checks
 
   litellm-configure:
     image: ohmymndy/alpine
