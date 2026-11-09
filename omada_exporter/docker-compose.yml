@@ -1,0 +1,35 @@
+services:
+  omada_exporter:
+    image: rcooler/omada_exporter:latest
+    container_name: omada_exporter
+    init: true
+    cpus: 0.5
+    mem_limit: 512m
+    restart: unless-stopped
+    environment:
+      OMADA_HOST: "${OMADA_HOST:?}"
+      OMADA_USER: "${OMADA_USER:?}"
+      OMADA_PASS: "${OMADA_PASS:?}"
+      OMADA_CLIENT_ID: "${OMADA_CLIENT_ID:?}"
+      OMADA_SECRET_ID: "${OMADA_SECRET_ID:?}"
+      OMADA_SITE: "${OMADA_SITE:?}"
+      OMADA_INSECURE: "true"
+      LOG_LEVEL: "info"
+
+      OMADA_MQTT_ENABLED: "false"
+      # OMADA_MQTT_BROKER: "tcp://homeassistant.local:1883"
+      # OMADA_MQTT_USER: "omada_exporter"
+      # OMADA_MQTT_PASS: "mqtt-password"
+      # OMADA_MQTT_CLIENT_ID: "omada_exporter"
+      # OMADA_MQTT_TOPIC_PREFIX: "omada_exporter"
+      # OMADA_MQTT_DISCOVERY_PREFIX: "homeassistant"
+      # OMADA_MQTT_INTERVAL: "60"
+      # OMADA_MQTT_RETAIN: "true"
+      # OMADA_MQTT_EXPIRE_AFTER: "180"
+    networks:
+      - default
+networks:
+  default:
+  reverse-proxy:
+    name: reverse-proxy
+    external: true
