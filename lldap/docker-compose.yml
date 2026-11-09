@@ -1,6 +1,6 @@
 name: lldap
-x-lldap: &lldap
-  image: lldap/lldap:2026-02-24
+x-lldap: &lldap # image: lldap/lldap:2026-02-24
+  image: lldap/lldap:2026-09-22
   restart: unless-stopped
   volumes:
     - "./storage/lldap:/data"
@@ -33,7 +33,7 @@ x-lldap: &lldap
     - GROUP_CONFIGS_DIR=/bootstrap/group-configs
     # - USER_SCHEMAS_DIR=/bootstrap/user-schemas
     # - GROUP_SCHEMAS_DIR=/bootstrap/group-schemas
-    - LLDAP_VERBOSE=true
+    - LLDAP_VERBOSE=false
 services:
   render-templates:
     image: ohmymndy/alpine
