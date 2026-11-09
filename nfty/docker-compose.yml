@@ -3,6 +3,8 @@ services:
   ntfy:
     image: binwiederhier/ntfy:v2.11.0
     container_name: nfty
+    cpus: 0.25
+    mem_limit: 128m
     command:
       - serve
     environment:
