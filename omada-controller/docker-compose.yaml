@@ -1,0 +1,40 @@
+services:
+  omada-controller:
+    container_name: omada-controller
+    image: mbentley/omada-controller:6.2
+    cpus: 1
+    mem_limit: 3G
+    # image: mbentley/omada-controller:5.15
+    restart: unless-stopped
+    ulimits:
+      nofile:
+        soft: 4096
+        hard: 8192
+    stop_grace_period: 60s
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - MANAGE_HTTP_PORT=8088
+      - MANAGE_HTTPS_PORT=8043
+      - PORTAL_HTTP_PORT=8088
+      - PORTAL_HTTPS_PORT=8843
+      - UPGRADE_HTTPS_PORT=8043
+      - PORT_APP_DISCOVERY=27001
+      - PORT_DISCOVERY=29810
+      - PORT_MANAGER_V1=29811
+      - PORT_ADOPT_V1=29812
+      - PORT_UPGRADE_V1=29813
+      - PORT_MANAGER_V2=29814
+      - PORT_TRANSFER_V2=29815
+      - PORT_RTTY=29816
+      - PORT_DEVICE_MONITOR=29817
+      - WEB_CONFIG_OVERRIDE=false
+      - SHOW_SERVER_LOGS=true
+      - SHOW_MONGODB_LOGS=false
+      - SSL_CERT_NAME=tls.crt
+      - SSL_KEY_NAME=tls.key
+      - TZ=Europe/Amsterdam
+    volumes:
+      - ./storage/data:/opt/tplink/EAPController/data
+      - ./storage/logs:/opt/tplink/EAPController/logs
