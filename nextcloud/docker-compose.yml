@@ -6,6 +6,8 @@ services:
     networks:
       - default
     command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
+    cpus: 1
+    mem_limit: 512m
     volumes:
       - ./storage/db:/var/lib/mysql
     environment:
@@ -23,15 +25,18 @@ services:
       - redis:/data
     mem_limit: 256M
     cpus: 0.25
+
   app:
-    image: nextcloud:30.0.6-apache
+    image: nextcloud:31.0.9-apache
     restart: unless-stopped
     init: true
     container_name: nextcloud
     cpus: 1.25
+    mem_limit: 3g
     networks:
       - default
       - reverse-proxy
+      - lldap
     links:
       - db
     volumes:
@@ -44,27 +49,33 @@ services:
       - MYSQL_HOST=db
       - REDIS_HOST=redis
       - NEXTCLOUD_DATA_DIR=/mnt/nextcloud/
+      - PHP_MEMORY_LIMIT=32000M
+      - PHP_UPLOAD_LIMIT=32000M
+      - APACHE_BODY_LIMIT=0
     labels:
       - "traefik.docker.network=reverse-proxy"
       - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.home.ohmymndy.com`)"
       # - "traefik.http.routers.nextcloud.service=nextcloud"
       # - "traefik.http.services.nextcloud.loadbalancer.server.port=9000"
+      - "traefik.http.routers.nextcloud.middlewares=chain-nextcloud@file"
       - "traefik.http.routers.nextcloud.tls=true"
       - "traefik.enable=true"
-    healthcheck:
-      test:
-        ["CMD-SHELL", "bash", "-c", "cat < /dev/null > /dev/tcp/127.0.0.1/80"]
-      interval: 1m
-      timeout: 1s
-      retries: 3
-      start_period: 2m
-      start_interval: 1s
+    # healthcheck:
+    #   test:
+    #     ["CMD-SHELL", "bash", "-c", "cat < /dev/null > /dev/tcp/127.0.0.1/80"]
+    #   interval: 1m
+    #   timeout: 1s
+    #   retries: 3
+    #   start_period: 2m
+    #   start_interval: 1s
 
 networks:
   default:
   reverse-proxy:
     name: reverse-proxy
     external: true
-
+  lldap:
+    name: lldap_default
+    external: true
 volumes:
   redis:
