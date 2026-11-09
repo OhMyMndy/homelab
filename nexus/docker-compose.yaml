@@ -1,6 +1,6 @@
 services:
   nexus:
-    image: sonatype/nexus3:3.77.2
+    image: sonatype/nexus3:3.89.1
     volumes:
       - ./storage/nexus:/nexus-data
     restart: unless-stopped
